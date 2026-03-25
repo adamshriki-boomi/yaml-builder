@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ConnectorProvider } from './context/ConnectorContext';
 import { ExButton, ButtonType, ButtonFlavor } from '@boomi/exosphere';
-import { useTheme } from './hooks/useTheme';
 import ConnectorForm from './components/ConnectorConfig/ConnectorForm';
 import ParameterList from './components/Parameters/ParameterList';
 import StepList from './components/Steps/StepList';
 import YamlEditor from './components/Editor/YamlEditor';
 import TemplateSelector from './components/Templates/TemplateSelector';
-import ThemeToggle from './components/Layout/ThemeToggle';
 
 const TABS = ['Connector Configuration', 'Interface Parameters', 'Workflow Steps'];
 
@@ -49,7 +47,12 @@ function AppContent() {
   const [isBottomPanelOpen, setIsBottomPanelOpen] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<'vertical' | 'horizontal' | null>(null);
-  const { theme, toggleTheme } = useTheme();
+
+  // Force light theme
+  useEffect(() => {
+    document.documentElement.classList.remove('ex-theme-dark');
+    document.documentElement.classList.add('ex-theme-light');
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -119,7 +122,6 @@ function AppContent() {
           </ExButton>
         </div>
         <div className="app-header-right">
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
           {!isWide && (
             <ExButton
               flavor={ButtonFlavor.BASE}

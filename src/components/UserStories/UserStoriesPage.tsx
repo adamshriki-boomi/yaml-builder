@@ -1,6 +1,4 @@
 import { ExBadge, ExButton, BadgeColor, BadgeShape, BadgeSize, ButtonType, ButtonFlavor } from '@boomi/exosphere';
-import { useTheme } from '../../hooks/useTheme';
-import ThemeToggle from '../Layout/ThemeToggle';
 
 interface UserStory {
   id: string;
@@ -408,7 +406,6 @@ interface Props {
 
 export default function UserStoriesPage({ onBack }: Props) {
   const totalStories = epics.reduce((sum, epic) => sum + epic.stories.length, 0);
-  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="app-shell">
@@ -421,9 +418,6 @@ export default function UserStoriesPage({ onBack }: Props) {
           <ExBadge color={BadgeColor.BLUE} shape={BadgeShape.ROUND}>
             {totalStories} stories
           </ExBadge>
-        </div>
-        <div className="app-header-right">
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </div>
       </div>
 

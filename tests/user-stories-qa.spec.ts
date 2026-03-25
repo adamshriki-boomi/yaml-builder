@@ -281,16 +281,11 @@ test.describe('Epic 10: UX & Responsiveness', () => {
     await expect(page.locator('.yaml-bottom-panel')).toBeVisible();
   });
 
-  test('Theme toggle works (light/dark)', async ({ page }) => {
+  test('Light mode only, no theme toggle', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
     await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
-    const toggle = page.locator('.theme-toggle');
-    await toggle.click();
-    await page.waitForTimeout(300);
-    expect(await page.locator('html').getAttribute('class')).toContain('ex-theme-dark');
-    await toggle.click();
-    await page.waitForTimeout(300);
+    await expect(page.locator('.theme-toggle')).toHaveCount(0);
     expect(await page.locator('html').getAttribute('class')).toContain('ex-theme-light');
   });
 });

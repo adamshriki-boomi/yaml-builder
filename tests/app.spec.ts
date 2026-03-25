@@ -119,21 +119,14 @@ test.describe('Templates', () => {
   });
 });
 
-test.describe('Theme toggle', () => {
-  test('toggles between light and dark', async ({ page }) => {
+test.describe('Light mode only', () => {
+  test('app is always in light mode with no theme toggle', async ({ page }) => {
     await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
 
-    const toggle = page.locator('.theme-toggle');
-    await expect(toggle).toBeVisible();
-
-    await toggle.click();
-    await page.waitForTimeout(300);
-    expect(await page.locator('html').getAttribute('class')).toContain('ex-theme-dark');
-
-    await toggle.click();
-    await page.waitForTimeout(300);
-    expect(await page.locator('html').getAttribute('class')).toContain('ex-theme-light');
+    await expect(page.locator('.theme-toggle')).toHaveCount(0);
+    const htmlClass = await page.locator('html').getAttribute('class');
+    expect(htmlClass).toContain('ex-theme-light');
   });
 });
 
