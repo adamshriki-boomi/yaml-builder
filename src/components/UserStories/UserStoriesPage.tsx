@@ -398,6 +398,146 @@ const epics: Epic[] = [
       },
     ],
   },
+  {
+    id: 11,
+    name: 'Multi-Reports',
+    description: 'Support for multiple independent report definitions within a single blueprint',
+    color: BadgeColor.BLUE,
+    stories: [
+      {
+        id: 'US-11.1',
+        story: 'As a user, I want to add multiple reports to a single blueprint so each report can independently fetch data from different API endpoints.',
+        acceptance: [
+          'Can add new multi-reports via the Workflow Steps tab',
+          'Each report has its own name, parameters, and steps',
+          'Reports appear as expandable/collapsible cards',
+        ],
+      },
+      {
+        id: 'US-11.2',
+        story: 'As a user, I want to define report-specific parameters (name, type, default) so each report can be independently configured.',
+        acceptance: [
+          'Report parameters section within each report card',
+          'Can add/edit/remove report parameters',
+          'Parameters generate correct YAML under report_parameters',
+        ],
+      },
+      {
+        id: 'US-11.3',
+        story: 'As a user, I want to add REST and Loop steps within each report to define the report workflow.',
+        acceptance: [
+          'Each report has its own step list with REST and Loop step support',
+          'Steps within a report are independent from other reports',
+          'Steps generate under multi-reports[].steps in YAML',
+        ],
+      },
+      {
+        id: 'US-11.4',
+        story: 'As a user, I want to duplicate and delete reports for faster configuration.',
+        acceptance: [
+          'Duplicate button creates a copy of the report with all parameters and steps',
+          'Delete button removes the report entirely',
+          'YAML updates immediately on add/duplicate/delete',
+        ],
+      },
+    ],
+  },
+  {
+    id: 12,
+    name: 'Pre/Post Run Configurations',
+    description: 'Initialization and cleanup steps that run before and after the main reports',
+    color: BadgeColor.ORANGE,
+    stories: [
+      {
+        id: 'US-12.1',
+        story: 'As a user, I want to define pre-run configuration groups with steps that run before the main reports for data discovery and initialization.',
+        acceptance: [
+          'Pre-Run Configurations section in Workflow Steps tab',
+          'Can add configuration groups with names and steps',
+          'Generates pre_run_configurations in YAML',
+        ],
+      },
+      {
+        id: 'US-12.2',
+        story: 'As a user, I want to define post-run configuration groups with steps that run after all reports complete for cleanup and finalization.',
+        acceptance: [
+          'Post-Run Configurations section in Workflow Steps tab',
+          'Can add configuration groups with names and steps',
+          'Generates post_run_configurations in YAML',
+        ],
+      },
+      {
+        id: 'US-12.3',
+        story: 'As a user, I want pre-run steps to output variables that can be referenced by multi-reports.',
+        acceptance: [
+          'Pre-run steps can define variable outputs',
+          'Variable names from pre-run are available for use in report steps',
+        ],
+      },
+    ],
+  },
+  {
+    id: 13,
+    name: 'Transformation Layers',
+    description: 'Data transformation pipelines applied to variable outputs',
+    color: BadgeColor.GREEN,
+    stories: [
+      {
+        id: 'US-13.1',
+        story: 'As a user, I want to add transformation layers to variable outputs to process API response data before storing it.',
+        acceptance: [
+          'Transformation layers section on each variable output',
+          'Can add multiple transformation layers in sequence',
+          'Layers generate under transformation_layers in YAML',
+        ],
+      },
+      {
+        id: 'US-13.2',
+        story: 'As a user, I want to configure transformation types (extract_json, flatten, filter, map) with JSON path and type parameters.',
+        acceptance: [
+          'Type dropdown with extract_json, flatten, filter, map options',
+          'JSON path field for extraction path',
+          'From type field to specify source data format',
+          'Optional depth parameter for nested transforms',
+        ],
+      },
+    ],
+  },
+  {
+    id: 14,
+    name: 'Variables Metadata & Storages',
+    description: 'Configuration for variable storage backends and metadata mappings',
+    color: BadgeColor.YELLOW,
+    stories: [
+      {
+        id: 'US-14.1',
+        story: 'As a user, I want to define variable storages (name + type) so the connector knows where to persist pipeline data.',
+        acceptance: [
+          'Variables Storages section in Connector Configuration tab',
+          'Can add storage entries with name and type (file_system, memory)',
+          'Generates variables_storages array in connector YAML',
+        ],
+      },
+      {
+        id: 'US-14.2',
+        story: 'As a user, I want to map variable names to metadata entries (format + storage_name) for each pipeline variable.',
+        acceptance: [
+          'Variables Metadata section in Connector Configuration tab',
+          'Key-value editor: variable_name maps to {format, storage_name}',
+          'Generates variables_metadata map in connector YAML',
+        ],
+      },
+      {
+        id: 'US-14.3',
+        story: 'As a user, I want a default retry strategy on the connector level that applies to all steps unless overridden.',
+        acceptance: [
+          'Default Retry Strategy section in Connector Configuration',
+          'Can enable/disable with status codes, attempts, and interval fields',
+          'Generates default_retry_strategy in connector YAML',
+        ],
+      },
+    ],
+  },
 ];
 
 interface Props {

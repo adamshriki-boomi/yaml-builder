@@ -1,6 +1,6 @@
 export type AuthType = 'bearer' | 'basic_http' | 'api_key' | 'oauth2';
 export type OAuthGrantType = 'authorization_code' | 'client_credentials';
-export type ParameterType = 'string' | 'authentication' | 'date_range' | 'list';
+export type ParameterType = 'string' | 'authentication' | 'date_range' | 'list' | 'multiselect' | 'enum';
 export type StepType = 'rest' | 'loop';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 export type PaginationType = 'page' | 'offset' | 'cursor';
@@ -27,19 +27,47 @@ export interface AuthConfig {
   oauth?: OAuthConfig;
 }
 
+// Dynamic source for multiselect parameters
+export interface DynamicSource {
+  type: string;
+  variable_name: string;
+  populate_on: string;
+  allow_manual_refresh: boolean;
+}
+
 export interface InterfaceParameter {
   id: string;
   name: string;
   type: ParameterType;
-  location: string;
-  is_sensitive: boolean;
-  map_to: string;
+  auth_type?: string;
+  value?: string;
+  required?: boolean;
+  values?: string[];      // for enum type
+  default?: string;       // for enum type
+  dynamic_source?: DynamicSource;
+  is_sensitive?: boolean;
 }
 
-export interface VariablesMetadata {
-  storage: StorageType;
-  results_dir: string;
-  data_format: VariableFormat;
+// Variable metadata entry (per-variable)
+export interface VariableMetadataEntry {
+  format: string;
+  storage_name: string;
+}
+
+// Variable storage
+export interface VariableStorage {
+  id: string;
+  name: string;
+  type: string;
+}
+
+// Transformation layer
+export interface TransformationLayer {
+  id: string;
+  type: string;
+  json_path?: string;
+  from_type?: string;
+  depth?: number;
 }
 
 export interface QueryParam {
@@ -51,9 +79,11 @@ export interface QueryParam {
 export interface VariableOutput {
   id: string;
   variable_name: string;
-  response_location: ResponseLocation;
-  json_path: string;
-  format: VariableFormat;
+  response_location: string;
+  variable_format: string;
+  json_path?: string;      // backward compat
+  format?: string;         // backward compat
+  transformation_layers: TransformationLayer[];
 }
 
 export interface BreakCondition {
@@ -113,14 +143,52 @@ export interface LoopStep {
 
 export type WorkflowStep = RestStep | LoopStep;
 
+// Report parameter (per-report)
+export interface ReportParameter {
+  id: string;
+  name: string;
+  type: string;
+  default?: string;
+  values?: string[];
+}
+
+// Multi-report definition
+export interface MultiReport {
+  id: string;
+  name: string;
+  report_parameters: ReportParameter[];
+  steps: WorkflowStep[];
+}
+
+// Configuration group (pre_run or post_run)
+export interface ConfigurationGroup {
+  id: string;
+  name: string;
+  steps: WorkflowStep[];
+}
+
+// Root connector config
 export interface ConnectorConfig {
+  // Interface parameters
+  interface_parameters: InterfaceParameter[];
+
+  // Connector settings
   connector_name: string;
   base_url: string;
   default_headers: Header[];
   auth: AuthConfig;
-  interface_parameters: InterfaceParameter[];
-  variables_metadata: VariablesMetadata;
-  steps: WorkflowStep[];
+  default_retry_strategy: RetryConfig | null;
+  variables_metadata: Record<string, VariableMetadataEntry>;
+  variables_storages: VariableStorage[];
+
+  // Pre-run configurations
+  pre_run_configurations: ConfigurationGroup[];
+
+  // Multi-reports
+  multi_reports: MultiReport[];
+
+  // Post-run configurations
+  post_run_configurations: ConfigurationGroup[];
 }
 
 export const createDefaultConnector = (): ConnectorConfig => ({
@@ -130,13 +198,13 @@ export const createDefaultConnector = (): ConnectorConfig => ({
   auth: {
     type: 'bearer',
   },
+  default_retry_strategy: null,
   interface_parameters: [],
-  variables_metadata: {
-    storage: 'file_system',
-    results_dir: '',
-    data_format: 'json',
-  },
-  steps: [],
+  variables_metadata: {},
+  variables_storages: [],
+  pre_run_configurations: [],
+  multi_reports: [],
+  post_run_configurations: [],
 });
 
 export const createRestStep = (): RestStep => ({
@@ -164,4 +232,36 @@ export const createLoopStep = (): LoopStep => ({
   include_in_output: false,
   ignore_errors: false,
   nested_steps: [createRestStep()],
+});
+
+export const createMultiReport = (): MultiReport => ({
+  id: crypto.randomUUID(),
+  name: '',
+  report_parameters: [],
+  steps: [],
+});
+
+export const createConfigurationGroup = (): ConfigurationGroup => ({
+  id: crypto.randomUUID(),
+  name: '',
+  steps: [],
+});
+
+export const createTransformationLayer = (): TransformationLayer => ({
+  id: crypto.randomUUID(),
+  type: 'extract_json',
+  json_path: '',
+  from_type: 'json',
+});
+
+export const createVariableStorage = (): VariableStorage => ({
+  id: crypto.randomUUID(),
+  name: '',
+  type: 'file_system',
+});
+
+export const createReportParameter = (): ReportParameter => ({
+  id: crypto.randomUUID(),
+  name: '',
+  type: 'string',
 });

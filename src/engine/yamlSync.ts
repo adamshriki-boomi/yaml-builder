@@ -1,26 +1,62 @@
 import { stringify, parse } from 'yaml';
-import type { ConnectorConfig } from '../types/connector';
+import type {
+  ConnectorConfig,
+  InterfaceParameter,
+  VariableMetadataEntry,
+  VariableStorage,
+  ConfigurationGroup,
+  MultiReport,
+  WorkflowStep,
+  RestStep,
+  VariableOutput,
+  TransformationLayer,
+  ReportParameter,
+} from '../types/connector';
 
 export function configToYaml(config: ConnectorConfig): string {
   try {
     const yamlObj: any = {};
 
-    if (config.connector_name) yamlObj.connector_name = config.connector_name;
-    if (config.base_url) yamlObj.base_url = config.base_url;
+    // 1) INTERFACE PARAMETERS
+    if (config.interface_parameters.length > 0) {
+      yamlObj.interface_parameters = {
+        section: {
+          source: config.interface_parameters.map(serializeInterfaceParam),
+        },
+      };
+    }
+
+    // 2) CONNECTOR
+    const connector: any = {};
+    if (config.connector_name) connector.name = config.connector_name;
+    if (config.base_url) connector.base_url = config.base_url;
 
     // Default headers
     if (config.default_headers.length > 0) {
-      yamlObj.default_headers = {};
+      connector.default_headers = {};
       config.default_headers.forEach(h => {
-        if (h.name) yamlObj.default_headers[h.name] = h.value;
+        if (h.name) connector.default_headers[h.name] = h.value;
       });
+    } else {
+      connector.default_headers = {};
+    }
+
+    // Default retry strategy
+    if (config.default_retry_strategy) {
+      connector.default_retry_strategy = {
+        status_codes: config.default_retry_strategy.status_codes,
+        attempts: config.default_retry_strategy.attempts,
+        interval: config.default_retry_strategy.interval,
+      };
+    } else {
+      connector.default_retry_strategy = {};
     }
 
     // Authentication
     if (config.auth.type) {
-      yamlObj.auth = { type: config.auth.type };
+      connector.auth = { type: config.auth.type };
       if (config.auth.type === 'oauth2' && config.auth.oauth) {
-        yamlObj.auth.oauth = {
+        connector.auth.oauth = {
           grant_type: config.auth.oauth.grant_type,
           ...(config.auth.oauth.token_url ? { token_url: config.auth.oauth.token_url } : {}),
           ...(config.auth.oauth.refresh_token ? { refresh_token: config.auth.oauth.refresh_token } : {}),
@@ -29,51 +65,42 @@ export function configToYaml(config: ConnectorConfig): string {
       }
     }
 
-    // Interface parameters
-    if (config.interface_parameters.length > 0) {
-      yamlObj.interface_parameters = config.interface_parameters.map(p => {
-        const param: any = {
-          name: p.name,
-          type: p.type,
-        };
-        if (p.location) param.location = p.location;
-        if (p.is_sensitive) param.is_sensitive = true;
-        if (p.map_to) param.map_to = p.map_to;
-        return param;
-      });
-    }
-
     // Variables metadata
-    if (config.variables_metadata.storage || config.variables_metadata.results_dir) {
-      yamlObj.variables_metadata = {
-        storage: config.variables_metadata.storage,
-        ...(config.variables_metadata.results_dir ? { results_dir: config.variables_metadata.results_dir } : {}),
-        data_format: config.variables_metadata.data_format,
-      };
+    if (Object.keys(config.variables_metadata).length > 0) {
+      connector.variables_metadata = {};
+      for (const [varName, entry] of Object.entries(config.variables_metadata)) {
+        connector.variables_metadata[varName] = {
+          format: entry.format,
+          storage_name: entry.storage_name,
+        };
+      }
     }
 
-    // Steps
-    if (config.steps.length > 0) {
-      yamlObj.steps = config.steps.map(step => {
-        if (step.type === 'rest') {
-          return serializeRestStep(step);
-        } else {
-          const loopObj: any = {
-            type: 'loop',
-            name: step.name,
-            ...(step.description ? { description: step.description } : {}),
-            loop_type: step.loop_type,
-            ...(step.items_path ? { items_path: step.items_path } : {}),
-            ...(step.item_name ? { item_name: step.item_name } : {}),
-            include_in_output: step.include_in_output,
-            ignore_errors: step.ignore_errors,
-          };
-          if (step.nested_steps.length > 0) {
-            loopObj.nested_steps = step.nested_steps.map(serializeRestStep);
-          }
-          return loopObj;
-        }
-      });
+    // Variables storages
+    if (config.variables_storages.length > 0) {
+      connector.variables_storages = config.variables_storages.map(s => ({
+        name: s.name,
+        type: s.type,
+      }));
+    }
+
+    if (Object.keys(connector).length > 0) {
+      yamlObj.connector = connector;
+    }
+
+    // 3) PRE-RUN CONFIGURATIONS
+    if (config.pre_run_configurations.length > 0) {
+      yamlObj.pre_run_configurations = config.pre_run_configurations.map(serializeConfigGroup);
+    }
+
+    // 4) MULTI-REPORTS (note: hyphen in YAML key)
+    if (config.multi_reports.length > 0) {
+      yamlObj['multi-reports'] = config.multi_reports.map(serializeMultiReport);
+    }
+
+    // 5) POST-RUN CONFIGURATIONS
+    if (config.post_run_configurations.length > 0) {
+      yamlObj.post_run_configurations = config.post_run_configurations.map(serializeConfigGroup);
     }
 
     return stringify(yamlObj, { indent: 2, lineWidth: 0 });
@@ -82,7 +109,81 @@ export function configToYaml(config: ConnectorConfig): string {
   }
 }
 
-function serializeRestStep(step: any): any {
+function serializeInterfaceParam(p: InterfaceParameter): any {
+  const param: any = {
+    name: p.name,
+    type: p.type,
+  };
+  if (p.auth_type) param.auth_type = p.auth_type;
+  if (p.value) param.value = p.value;
+  if (p.required) param.required = true;
+  if (p.values && p.values.length > 0) param.values = p.values;
+  if (p.default) param.default = p.default;
+  if (p.dynamic_source) {
+    param.dynamic_source = {
+      type: p.dynamic_source.type,
+      variable_name: p.dynamic_source.variable_name,
+      populate_on: p.dynamic_source.populate_on,
+      allow_manual_refresh: p.dynamic_source.allow_manual_refresh,
+    };
+  }
+  if (p.is_sensitive) param.is_sensitive = true;
+  return param;
+}
+
+function serializeConfigGroup(group: ConfigurationGroup): any {
+  const obj: any = {
+    name: group.name,
+  };
+  if (group.steps.length > 0) {
+    obj.steps = group.steps.map(serializeWorkflowStep);
+  }
+  return obj;
+}
+
+function serializeMultiReport(report: MultiReport): any {
+  const obj: any = {
+    name: report.name,
+  };
+  if (report.report_parameters.length > 0) {
+    obj.report_parameters = report.report_parameters.map((rp: ReportParameter) => {
+      const rpObj: any = {
+        name: rp.name,
+        type: rp.type,
+      };
+      if (rp.default) rpObj.default = rp.default;
+      if (rp.values && rp.values.length > 0) rpObj.values = rp.values;
+      return rpObj;
+    });
+  }
+  if (report.steps.length > 0) {
+    obj.steps = report.steps.map(serializeWorkflowStep);
+  }
+  return obj;
+}
+
+function serializeWorkflowStep(step: WorkflowStep): any {
+  if (step.type === 'rest') {
+    return serializeRestStep(step);
+  } else {
+    const loopObj: any = {
+      type: 'loop',
+      name: step.name,
+      ...(step.description ? { description: step.description } : {}),
+      loop_type: step.loop_type,
+      ...(step.items_path ? { items_path: step.items_path } : {}),
+      ...(step.item_name ? { item_name: step.item_name } : {}),
+      include_in_output: step.include_in_output,
+      ignore_errors: step.ignore_errors,
+    };
+    if (step.nested_steps.length > 0) {
+      loopObj.nested_steps = step.nested_steps.map(serializeRestStep);
+    }
+    return loopObj;
+  }
+}
+
+function serializeRestStep(step: RestStep): any {
   const obj: any = {
     type: 'rest',
     name: step.name,
@@ -142,16 +243,29 @@ function serializeRestStep(step: any): any {
   }
 
   if (step.variables_output?.length > 0) {
-    obj.variables_output = step.variables_output.map((v: any) => ({
-      variable_name: v.variable_name,
-      response_location: v.response_location,
-      ...(v.json_path ? { json_path: v.json_path } : {}),
-      format: v.format,
-    }));
+    obj.variables_output = step.variables_output.map((v: VariableOutput) => {
+      const voObj: any = {
+        response_location: v.response_location || 'data',
+        variable_name: v.variable_name,
+        variable_format: v.variable_format || v.format || 'json',
+      };
+      if (v.transformation_layers && v.transformation_layers.length > 0) {
+        voObj.transformation_layers = v.transformation_layers.map((t: TransformationLayer) => {
+          const tObj: any = { type: t.type };
+          if (t.json_path) tObj.json_path = t.json_path;
+          if (t.from_type) tObj.from_type = t.from_type;
+          if (t.depth !== undefined && t.depth !== 0) tObj.depth = t.depth;
+          return tObj;
+        });
+      }
+      return voObj;
+    });
   }
 
   return obj;
 }
+
+// ===== YAML -> CONFIG DESERIALIZERS =====
 
 export function yamlToConfig(yamlText: string): ConnectorConfig {
   const obj = parse(yamlText);
@@ -159,44 +273,142 @@ export function yamlToConfig(yamlText: string): ConnectorConfig {
     throw new Error('Invalid YAML format');
   }
 
+  // Parse interface_parameters
+  let interfaceParams: InterfaceParameter[] = [];
+  if (obj.interface_parameters?.section?.source) {
+    interfaceParams = (obj.interface_parameters.section.source || []).map(deserializeInterfaceParam);
+  } else if (Array.isArray(obj.interface_parameters)) {
+    // Backward compat: flat array
+    interfaceParams = obj.interface_parameters.map(deserializeInterfaceParam);
+  }
+
+  // Parse connector section
+  const conn = obj.connector || {};
+
   const config: ConnectorConfig = {
-    connector_name: obj.connector_name || '',
-    base_url: obj.base_url || '',
-    default_headers: obj.default_headers
-      ? Object.entries(obj.default_headers).map(([name, value]) => ({
-          id: crypto.randomUUID(),
-          name,
-          value: String(value),
-        }))
-      : [],
-    auth: {
-      type: obj.auth?.type || 'bearer',
-      ...(obj.auth?.oauth ? {
-        oauth: {
-          grant_type: obj.auth.oauth.grant_type || 'authorization_code',
-          token_url: obj.auth.oauth.token_url || '',
-          refresh_token: obj.auth.oauth.refresh_token || '',
-          use_base64: obj.auth.oauth.use_base64 || false,
-        },
-      } : {}),
-    },
-    interface_parameters: (obj.interface_parameters || []).map((p: any) => ({
-      id: crypto.randomUUID(),
-      name: p.name || '',
-      type: p.type || 'string',
-      location: p.location || 'query',
-      is_sensitive: p.is_sensitive || false,
-      map_to: p.map_to || '',
-    })),
-    variables_metadata: {
-      storage: obj.variables_metadata?.storage || 'file_system',
-      results_dir: obj.variables_metadata?.results_dir || '',
-      data_format: obj.variables_metadata?.data_format || 'json',
-    },
-    steps: (obj.steps || []).map((s: any) => deserializeStep(s)),
+    connector_name: conn.name || obj.connector_name || '',
+    base_url: conn.base_url || obj.base_url || '',
+    default_headers: deserializeHeaders(conn.default_headers || obj.default_headers),
+    auth: deserializeAuth(conn.auth || obj.auth),
+    default_retry_strategy: conn.default_retry_strategy && Object.keys(conn.default_retry_strategy).length > 0
+      ? {
+          status_codes: conn.default_retry_strategy.status_codes || '',
+          attempts: conn.default_retry_strategy.attempts || 3,
+          interval: conn.default_retry_strategy.interval || 10,
+        }
+      : null,
+    interface_parameters: interfaceParams,
+    variables_metadata: deserializeVariablesMetadata(conn.variables_metadata || obj.variables_metadata),
+    variables_storages: deserializeVariablesStorages(conn.variables_storages || obj.variables_storages),
+    pre_run_configurations: (obj.pre_run_configurations || []).map(deserializeConfigGroup),
+    multi_reports: (obj['multi-reports'] || obj.multi_reports || []).map(deserializeMultiReport),
+    post_run_configurations: (obj.post_run_configurations || []).map(deserializeConfigGroup),
   };
 
   return config;
+}
+
+function deserializeInterfaceParam(p: any): InterfaceParameter {
+  const param: InterfaceParameter = {
+    id: crypto.randomUUID(),
+    name: p.name || '',
+    type: p.type || 'string',
+  };
+  if (p.auth_type) param.auth_type = p.auth_type;
+  if (p.value !== undefined) param.value = String(p.value);
+  if (p.required) param.required = true;
+  if (p.values) param.values = p.values;
+  if (p.default !== undefined) param.default = String(p.default);
+  if (p.dynamic_source) {
+    param.dynamic_source = {
+      type: p.dynamic_source.type || 'variable',
+      variable_name: p.dynamic_source.variable_name || '',
+      populate_on: p.dynamic_source.populate_on || 'mount',
+      allow_manual_refresh: p.dynamic_source.allow_manual_refresh ?? true,
+    };
+  }
+  if (p.is_sensitive) param.is_sensitive = true;
+  // backward compat: map old location/map_to if present
+  return param;
+}
+
+function deserializeHeaders(headers: any): any[] {
+  if (!headers) return [];
+  if (typeof headers === 'object' && !Array.isArray(headers)) {
+    return Object.entries(headers).map(([name, value]) => ({
+      id: crypto.randomUUID(),
+      name,
+      value: String(value),
+    }));
+  }
+  return [];
+}
+
+function deserializeAuth(auth: any): any {
+  if (!auth) return { type: 'bearer' };
+  return {
+    type: auth.type || 'bearer',
+    ...(auth.oauth ? {
+      oauth: {
+        grant_type: auth.oauth.grant_type || 'authorization_code',
+        token_url: auth.oauth.token_url || '',
+        refresh_token: auth.oauth.refresh_token || '',
+        use_base64: auth.oauth.use_base64 || false,
+      },
+    } : {}),
+  };
+}
+
+function deserializeVariablesMetadata(meta: any): Record<string, VariableMetadataEntry> {
+  if (!meta || typeof meta !== 'object') return {};
+  // Check if it's the old flat format
+  if (meta.storage || meta.results_dir || meta.data_format) {
+    // Old format - skip it, don't try to convert
+    return {};
+  }
+  const result: Record<string, VariableMetadataEntry> = {};
+  for (const [key, val] of Object.entries(meta)) {
+    if (val && typeof val === 'object') {
+      const entry = val as any;
+      result[key] = {
+        format: entry.format || 'json',
+        storage_name: entry.storage_name || '',
+      };
+    }
+  }
+  return result;
+}
+
+function deserializeVariablesStorages(storages: any): VariableStorage[] {
+  if (!Array.isArray(storages)) return [];
+  return storages.map((s: any) => ({
+    id: crypto.randomUUID(),
+    name: s.name || '',
+    type: s.type || 'file_system',
+  }));
+}
+
+function deserializeConfigGroup(group: any): any {
+  return {
+    id: crypto.randomUUID(),
+    name: group.name || '',
+    steps: (group.steps || []).map(deserializeStep),
+  };
+}
+
+function deserializeMultiReport(report: any): MultiReport {
+  return {
+    id: crypto.randomUUID(),
+    name: report.name || '',
+    report_parameters: (report.report_parameters || []).map((rp: any) => ({
+      id: crypto.randomUUID(),
+      name: rp.name || '',
+      type: rp.type || 'string',
+      default: rp.default !== undefined ? String(rp.default) : undefined,
+      values: rp.values || undefined,
+    })),
+    steps: (report.steps || []).map(deserializeStep),
+  };
 }
 
 function deserializeStep(s: any): any {
@@ -217,7 +429,7 @@ function deserializeStep(s: any): any {
   return deserializeRestStep(s);
 }
 
-function deserializeRestStep(s: any): any {
+function deserializeRestStep(s: any): RestStep {
   return {
     id: crypto.randomUUID(),
     type: 'rest',
@@ -233,18 +445,20 @@ function deserializeRestStep(s: any): any {
         }))
       : [],
     headers: s.headers
-      ? Object.entries(s.headers).map(([name, value]) => ({
-          id: crypto.randomUUID(),
-          name,
-          value: String(value),
-        }))
+      ? (typeof s.headers === 'object' && !Array.isArray(s.headers)
+        ? Object.entries(s.headers).map(([name, value]) => ({
+            id: crypto.randomUUID(),
+            name,
+            value: String(value),
+          }))
+        : [])
       : [],
     body: s.body || '',
     content_type: s.content_type || 'application/json',
     pagination: s.pagination ? {
       type: s.pagination.type || 'page',
-      page_param_name: s.pagination.page_param_name || 'page',
-      page_size_param_name: s.pagination.page_size_param_name || 'page_size',
+      page_param_name: s.pagination.page_param_name || s.pagination.offset_param || 'page',
+      page_size_param_name: s.pagination.page_size_param_name || s.pagination.limit_param || 'page_size',
       start_value: s.pagination.start_value ?? 1,
       increment: s.pagination.increment ?? 1,
       parameter_location: s.pagination.parameter_location || 'query',
@@ -266,8 +480,16 @@ function deserializeRestStep(s: any): any {
       id: crypto.randomUUID(),
       variable_name: v.variable_name || '',
       response_location: v.response_location || 'data',
+      variable_format: v.variable_format || v.format || 'json',
       json_path: v.json_path || '',
-      format: v.format || 'json',
+      format: v.format || v.variable_format || 'json',
+      transformation_layers: (v.transformation_layers || []).map((t: any) => ({
+        id: crypto.randomUUID(),
+        type: t.type || 'extract_json',
+        json_path: t.json_path || '',
+        from_type: t.from_type || '',
+        depth: t.depth || undefined,
+      })),
     })),
   };
 }

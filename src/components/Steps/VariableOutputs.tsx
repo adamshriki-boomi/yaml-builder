@@ -1,5 +1,7 @@
 import { ExInput, ExSelect, ExButton, ExIconButton, ExMenuItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
-import type { RestStep, VariableOutput } from '../../types/connector';
+import type { RestStep, VariableOutput, TransformationLayer } from '../../types/connector';
+import { createTransformationLayer } from '../../types/connector';
+import CollapsibleSection from '../Layout/CollapsibleSection';
 
 interface Props {
   step: RestStep;
@@ -12,8 +14,8 @@ export default function VariableOutputs({ step, onChange }: Props) {
       id: crypto.randomUUID(),
       variable_name: '',
       response_location: 'data',
-      json_path: '',
-      format: 'json',
+      variable_format: 'json',
+      transformation_layers: [],
     };
     onChange({ variables_output: [...step.variables_output, newOutput] });
   };
@@ -27,6 +29,42 @@ export default function VariableOutputs({ step, onChange }: Props) {
 
   const removeOutput = (id: string) => {
     onChange({ variables_output: step.variables_output.filter(o => o.id !== id) });
+  };
+
+  // Transformation layers
+  const addTransformationLayer = (outputId: string) => {
+    const updated = step.variables_output.map(o => {
+      if (o.id !== outputId) return o;
+      return {
+        ...o,
+        transformation_layers: [...o.transformation_layers, createTransformationLayer()],
+      };
+    });
+    onChange({ variables_output: updated });
+  };
+
+  const updateTransformationLayer = (outputId: string, layerId: string, field: keyof TransformationLayer, value: any) => {
+    const updated = step.variables_output.map(o => {
+      if (o.id !== outputId) return o;
+      return {
+        ...o,
+        transformation_layers: o.transformation_layers.map(t =>
+          t.id === layerId ? { ...t, [field]: value } : t
+        ),
+      };
+    });
+    onChange({ variables_output: updated });
+  };
+
+  const removeTransformationLayer = (outputId: string, layerId: string) => {
+    const updated = step.variables_output.map(o => {
+      if (o.id !== outputId) return o;
+      return {
+        ...o,
+        transformation_layers: o.transformation_layers.filter(t => t.id !== layerId),
+      };
+    });
+    onChange({ variables_output: updated });
   };
 
   return (
@@ -68,25 +106,85 @@ export default function VariableOutputs({ step, onChange }: Props) {
             </ExSelect>
           </div>
           <div className="form-row">
-            <ExInput
-              label="JSON Path"
-              value={output.json_path}
-              placeholder="e.g., $.data.users"
-              onInput={(e: any) => updateOutput(output.id, 'json_path', e.target.value)}
-            />
             <ExSelect
-              label="Format"
-              selected={output.format}
+              label="Variable Format"
+              selected={output.variable_format || 'json'}
               valueBasedSelection
               onChange={(e: any) => {
                 const val = e.detail?.value;
-                if (val) updateOutput(output.id, 'format', val);
+                if (val) updateOutput(output.id, 'variable_format', val);
               }}
             >
               <ExMenuItem value="json">JSON</ExMenuItem>
               <ExMenuItem value="text">Text</ExMenuItem>
             </ExSelect>
           </div>
+
+          {/* Transformation Layers */}
+          <CollapsibleSection label={`Transformation Layers (${output.transformation_layers.length})`} defaultOpen={false}>
+            {output.transformation_layers.map((layer, layerIdx) => (
+              <div key={layer.id} style={{
+                padding: '8px',
+                marginBottom: '6px',
+                border: '1px dashed var(--exo-color-border, #e0e0e0)',
+                borderRadius: '4px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--exo-color-font-secondary, #666)' }}>Layer {layerIdx + 1}</span>
+                  <ExIconButton
+                    type={IconButtonType.SECONDARY}
+                    flavor={IconButtonFlavor.RISKY}
+                    icon="delete"
+                    label="Delete layer"
+                    onClick={() => removeTransformationLayer(output.id, layer.id)}
+                  />
+                </div>
+                <div className="form-row">
+                  <ExSelect
+                    label="Type"
+                    selected={layer.type}
+                    valueBasedSelection
+                    onChange={(e: any) => {
+                      const val = e.detail?.value;
+                      if (val) updateTransformationLayer(output.id, layer.id, 'type', val);
+                    }}
+                  >
+                    <ExMenuItem value="extract_json">Extract JSON</ExMenuItem>
+                    <ExMenuItem value="flatten">Flatten</ExMenuItem>
+                    <ExMenuItem value="filter">Filter</ExMenuItem>
+                    <ExMenuItem value="map">Map</ExMenuItem>
+                  </ExSelect>
+                  <ExInput
+                    label="JSON Path"
+                    value={layer.json_path || ''}
+                    placeholder="e.g., $.data[*]"
+                    onInput={(e: any) => updateTransformationLayer(output.id, layer.id, 'json_path', e.target.value)}
+                  />
+                </div>
+                <div className="form-row">
+                  <ExInput
+                    label="From Type"
+                    value={layer.from_type || ''}
+                    placeholder="e.g., json"
+                    onInput={(e: any) => updateTransformationLayer(output.id, layer.id, 'from_type', e.target.value)}
+                  />
+                  <ExInput
+                    label="Depth"
+                    type="number"
+                    value={String(layer.depth || '')}
+                    placeholder="Optional depth"
+                    onInput={(e: any) => {
+                      const val = e.target.value ? Number(e.target.value) : undefined;
+                      updateTransformationLayer(output.id, layer.id, 'depth', val);
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+            <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={() => addTransformationLayer(output.id)}>
+              + Add Layer
+            </ExButton>
+          </CollapsibleSection>
         </div>
       ))}
     </div>

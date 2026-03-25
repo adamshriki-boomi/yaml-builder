@@ -1,6 +1,7 @@
 import { ExInput, ExSelect, ExButton, ExIconButton, ExMenuItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
 import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
-import type { Header } from '../../types/connector';
+import type { Header, VariableStorage, VariableMetadataEntry } from '../../types/connector';
+import { createVariableStorage } from '../../types/connector';
 import AuthConfigSection from './AuthConfig';
 import CollapsibleSection from '../Layout/CollapsibleSection';
 
@@ -35,14 +36,91 @@ export default function ConnectorForm() {
     });
   };
 
-  // --- Variables Metadata ---
-  const updateVariablesMeta = (field: string, value: string) => {
+  // --- Default Retry Strategy ---
+  const enableDefaultRetry = () => {
     dispatch({
       type: 'UPDATE_CONFIG',
       payload: {
-        variables_metadata: { ...config.variables_metadata, [field]: value },
+        default_retry_strategy: {
+          status_codes: '429,500,502,503,504',
+          attempts: 3,
+          interval: 10,
+        },
       },
     });
+  };
+
+  const removeDefaultRetry = () => {
+    dispatch({
+      type: 'UPDATE_CONFIG',
+      payload: { default_retry_strategy: null },
+    });
+  };
+
+  const updateDefaultRetry = (field: string, value: any) => {
+    if (!config.default_retry_strategy) return;
+    dispatch({
+      type: 'UPDATE_CONFIG',
+      payload: {
+        default_retry_strategy: { ...config.default_retry_strategy, [field]: value },
+      },
+    });
+  };
+
+  // --- Variables Storages ---
+  const addStorage = () => {
+    const newStorage: VariableStorage = createVariableStorage();
+    dispatch({
+      type: 'UPDATE_CONFIG',
+      payload: { variables_storages: [...config.variables_storages, newStorage] },
+    });
+  };
+
+  const updateStorage = (id: string, field: 'name' | 'type', val: string) => {
+    const updated = config.variables_storages.map(s =>
+      s.id === id ? { ...s, [field]: val } : s
+    );
+    dispatch({ type: 'UPDATE_CONFIG', payload: { variables_storages: updated } });
+  };
+
+  const removeStorage = (id: string) => {
+    dispatch({
+      type: 'UPDATE_CONFIG',
+      payload: { variables_storages: config.variables_storages.filter(s => s.id !== id) },
+    });
+  };
+
+  // --- Variables Metadata (key-value map) ---
+  const addMetadataEntry = () => {
+    const newKey = `var_${Object.keys(config.variables_metadata).length + 1}`;
+    const newEntry: VariableMetadataEntry = { format: 'json', storage_name: '' };
+    dispatch({
+      type: 'UPDATE_CONFIG',
+      payload: {
+        variables_metadata: { ...config.variables_metadata, [newKey]: newEntry },
+      },
+    });
+  };
+
+  const updateMetadataKey = (oldKey: string, newKey: string) => {
+    if (oldKey === newKey || !newKey) return;
+    const entries = { ...config.variables_metadata };
+    const val = entries[oldKey];
+    delete entries[oldKey];
+    entries[newKey] = val;
+    dispatch({ type: 'UPDATE_CONFIG', payload: { variables_metadata: entries } });
+  };
+
+  const updateMetadataValue = (key: string, field: 'format' | 'storage_name', val: string) => {
+    const entries = { ...config.variables_metadata };
+    entries[key] = { ...entries[key], [field]: val };
+    dispatch({ type: 'UPDATE_CONFIG', payload: { variables_metadata: entries } });
+  };
+
+  const removeMetadataEntry = (key: string) => {
+    const entries = { ...config.variables_metadata };
+    delete entries[key];
+    dispatch({ type: 'UPDATE_CONFIG', payload: { variables_metadata: entries } });
   };
 
   return (
@@ -106,40 +184,143 @@ export default function ConnectorForm() {
         <AuthConfigSection />
       </CollapsibleSection>
 
-      <CollapsibleSection label="Variables Metadata">
-        <div className="form-row">
-          <ExSelect
-            label="Storage"
-            selected={config.variables_metadata.storage}
-            valueBasedSelection
-            onChange={(e: any) => {
-              const val = e.detail?.value;
-              if (val) updateVariablesMeta('storage', val);
-            }}
-          >
-            <ExMenuItem value="file_system">File System</ExMenuItem>
-            <ExMenuItem value="memory">Memory</ExMenuItem>
-          </ExSelect>
-          <ExSelect
-            label="Data Format"
-            selected={config.variables_metadata.data_format}
-            valueBasedSelection
-            onChange={(e: any) => {
-              const val = e.detail?.value;
-              if (val) updateVariablesMeta('data_format', val);
-            }}
-          >
-            <ExMenuItem value="json">JSON</ExMenuItem>
-            <ExMenuItem value="text">Text</ExMenuItem>
-          </ExSelect>
+      <CollapsibleSection label="Default Retry Strategy">
+        {!config.default_retry_strategy ? (
+          <div>
+            <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+              No default retry strategy. Add one to apply retries across all steps.
+            </p>
+            <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={enableDefaultRetry}>
+              Enable Default Retry
+            </ExButton>
+          </div>
+        ) : (
+          <div>
+            <div className="form-field">
+              <ExInput
+                label="Status Codes"
+                value={config.default_retry_strategy.status_codes}
+                placeholder="429,500,502,503,504"
+                onInput={(e: any) => updateDefaultRetry('status_codes', e.target.value)}
+              />
+            </div>
+            <div className="form-row">
+              <ExInput
+                label="Max Attempts"
+                type="number"
+                value={String(config.default_retry_strategy.attempts)}
+                onInput={(e: any) => updateDefaultRetry('attempts', Number(e.target.value))}
+              />
+              <ExInput
+                label="Interval (seconds)"
+                type="number"
+                value={String(config.default_retry_strategy.interval)}
+                onInput={(e: any) => updateDefaultRetry('interval', Number(e.target.value))}
+              />
+            </div>
+            <div style={{ marginTop: '8px' }}>
+              <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.RISKY} onClick={removeDefaultRetry}>
+                Remove Default Retry
+              </ExButton>
+            </div>
+          </div>
+        )}
+      </CollapsibleSection>
+
+      <CollapsibleSection label="Variables Storages">
+        {config.variables_storages.length === 0 && (
+          <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+            No variable storages configured. Add storage backends for your pipeline variables.
+          </p>
+        )}
+        {config.variables_storages.map(storage => (
+          <div key={storage.id} className="form-row" style={{ alignItems: 'flex-end' }}>
+            <ExInput
+              label="Storage Name"
+              value={storage.name}
+              placeholder="e.g., results_dir"
+              onInput={(e: any) => updateStorage(storage.id, 'name', e.target.value)}
+            />
+            <ExSelect
+              label="Storage Type"
+              selected={storage.type}
+              valueBasedSelection
+              onChange={(e: any) => {
+                const val = e.detail?.value;
+                if (val) updateStorage(storage.id, 'type', val);
+              }}
+            >
+              <ExMenuItem value="file_system">File System</ExMenuItem>
+              <ExMenuItem value="memory">Memory</ExMenuItem>
+            </ExSelect>
+            <ExIconButton
+              type={IconButtonType.SECONDARY}
+              flavor={IconButtonFlavor.RISKY}
+              icon="delete"
+              label="Delete storage"
+              onClick={() => removeStorage(storage.id)}
+            />
+          </div>
+        ))}
+        <div style={{ marginTop: '8px' }}>
+          <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addStorage}>
+            + Add Storage
+          </ExButton>
         </div>
-        <div className="form-field">
-          <ExInput
-            label="Results Directory (optional)"
-            value={config.variables_metadata.results_dir}
-            placeholder="e.g., /output/results"
-            onInput={(e: any) => updateVariablesMeta('results_dir', e.target.value)}
-          />
+      </CollapsibleSection>
+
+      <CollapsibleSection label="Variables Metadata">
+        <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+          Map variable names to their format and storage backend.
+        </p>
+        {Object.entries(config.variables_metadata).map(([key, entry]) => (
+          <div key={key} style={{
+            padding: '12px',
+            marginBottom: '8px',
+            border: '1px solid var(--exo-color-border, #e0e0e0)',
+            borderRadius: '6px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+              <ExIconButton
+                type={IconButtonType.SECONDARY}
+                flavor={IconButtonFlavor.RISKY}
+                icon="delete"
+                label="Delete metadata entry"
+                onClick={() => removeMetadataEntry(key)}
+              />
+            </div>
+            <div className="form-row">
+              <ExInput
+                label="Variable Name"
+                value={key}
+                placeholder="e.g., report1_raw"
+                onBlur={(e: any) => updateMetadataKey(key, e.target.value)}
+              />
+              <ExSelect
+                label="Format"
+                selected={entry.format}
+                valueBasedSelection
+                onChange={(e: any) => {
+                  const val = e.detail?.value;
+                  if (val) updateMetadataValue(key, 'format', val);
+                }}
+              >
+                <ExMenuItem value="json">JSON</ExMenuItem>
+                <ExMenuItem value="text">Text</ExMenuItem>
+              </ExSelect>
+              <ExInput
+                label="Storage Name"
+                value={entry.storage_name}
+                placeholder="e.g., results_dir"
+                onInput={(e: any) => updateMetadataValue(key, 'storage_name', e.target.value)}
+              />
+            </div>
+          </div>
+        ))}
+        <div style={{ marginTop: '8px' }}>
+          <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addMetadataEntry}>
+            + Add Metadata Entry
+          </ExButton>
         </div>
       </CollapsibleSection>
     </div>
