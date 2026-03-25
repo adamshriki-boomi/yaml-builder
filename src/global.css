@@ -1,0 +1,322 @@
+:root {
+  font-family: var(--exo-font-family, 'Open Sans', sans-serif);
+  color: var(--exo-color-font, #333);
+  background-color: var(--exo-color-page, var(--exo-color-background, #fff));
+}
+
+html, body {
+  background-color: var(--exo-color-page, var(--exo-color-background, #fff));
+  color: var(--exo-color-font, #333);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ==============================
+   APP SHELL
+   ============================== */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ==============================
+   HEADER
+   ============================== */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 48px;
+  border-bottom: 1px solid var(--exo-color-border, #e0e0e0);
+  flex-shrink: 0;
+  background: var(--exo-color-background, #fff);
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==============================
+   THEME TOGGLE
+   ============================== */
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--exo-color-border, #e0e0e0);
+  border-radius: 6px;
+  background: var(--exo-color-background, #fff);
+  color: var(--exo-color-font-secondary, #666);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.theme-toggle:hover {
+  background: var(--exo-color-background-secondary, #f5f5f5);
+  color: var(--exo-color-font, #333);
+  border-color: var(--exo-color-font-secondary, #999);
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-logo-mark {
+  width: 24px;
+  height: 24px;
+  background: var(--exo-color-primary, #0052cc);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.app-logo-text {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.3px;
+}
+
+/* ==============================
+   BODY LAYOUT
+   ============================== */
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ==============================
+   TAB BAR
+   ============================== */
+
+.tab-bar {
+  display: flex;
+  border-bottom: 2px solid var(--exo-color-border, #e0e0e0);
+  flex-shrink: 0;
+  background: var(--exo-color-background, #fff);
+  padding: 0 16px;
+  gap: 0;
+}
+
+.tab-bar-item {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--exo-color-font-secondary, #666);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 12px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-bar-item:hover {
+  color: var(--exo-color-font, #333);
+}
+
+.tab-bar-item--active {
+  color: var(--exo-color-primary, #0052cc);
+  border-bottom-color: var(--exo-color-primary, #0052cc);
+  font-weight: 600;
+}
+
+/* ==============================
+   TAB CONTENT
+   ============================== */
+
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* ==============================
+   SIDE RESIZER (wide mode)
+   ============================== */
+
+.side-resizer {
+  width: 6px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.side-resizer:hover,
+.side-resizer:active {
+  background: var(--exo-color-primary, #0052cc);
+}
+
+.side-resizer-line {
+  width: 2px;
+  height: 32px;
+  border-radius: 1px;
+  background: var(--exo-color-border, #ccc);
+  transition: background 0.15s;
+}
+
+.side-resizer:hover .side-resizer-line,
+.side-resizer:active .side-resizer-line {
+  background: transparent;
+}
+
+/* ==============================
+   YAML SIDE PANEL (wide mode)
+   ============================== */
+
+.yaml-side-panel {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==============================
+   YAML BOTTOM PANEL (narrow mode)
+   ============================== */
+
+.yaml-bottom-panel {
+  border-top: 2px solid var(--exo-color-border, #e0e0e0);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.yaml-bottom-handle {
+  height: 8px;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--exo-color-background-secondary, #f5f5f5);
+  flex-shrink: 0;
+}
+
+.yaml-bottom-handle:hover {
+  background: var(--exo-color-background-tertiary, #eee);
+}
+
+.yaml-bottom-handle-bar {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--exo-color-border, #ccc);
+}
+
+/* ==============================
+   FORM ELEMENTS
+   ============================== */
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+  color: var(--exo-color-font-secondary, #666);
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row > * {
+  flex: 1;
+}
+
+.form-field {
+  margin-bottom: 12px;
+}
+
+/* ==============================
+   CODEMIRROR THEMING
+   ============================== */
+
+.cm-editor {
+  height: 100%;
+  font-size: 13px;
+  border: none;
+  background-color: var(--exo-color-background, #fff);
+  color: var(--exo-color-font, #333);
+}
+
+.cm-editor .cm-content {
+  color: var(--exo-color-font, #333);
+  caret-color: var(--exo-color-font, #333);
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-gutters {
+  background: var(--exo-color-background-secondary, #f5f5f5) !important;
+  border-right: 1px solid var(--exo-color-border, #e0e0e0) !important;
+  color: var(--exo-color-font-secondary, #666) !important;
+}
+
+.cm-activeLineGutter,
+.cm-activeLine {
+  background-color: var(--exo-color-background-secondary, #f5f5f5) !important;
+}
+
+.cm-selectionBackground {
+  background-color: var(--exo-color-primary-background, rgba(0, 82, 204, 0.15)) !important;
+}
+
+/* Dark mode cursor line */
+.ex-theme-dark .cm-cursor {
+  border-left-color: var(--exo-color-font, #fff) !important;
+}

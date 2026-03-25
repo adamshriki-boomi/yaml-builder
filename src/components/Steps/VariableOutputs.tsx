@@ -1,0 +1,94 @@
+import { ExInput, ExSelect, ExButton, ExIconButton, ExMenuItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
+import type { RestStep, VariableOutput } from '../../types/connector';
+
+interface Props {
+  step: RestStep;
+  onChange: (updates: Partial<RestStep>) => void;
+}
+
+export default function VariableOutputs({ step, onChange }: Props) {
+  const addOutput = () => {
+    const newOutput: VariableOutput = {
+      id: crypto.randomUUID(),
+      variable_name: '',
+      response_location: 'data',
+      json_path: '',
+      format: 'json',
+    };
+    onChange({ variables_output: [...step.variables_output, newOutput] });
+  };
+
+  const updateOutput = (id: string, field: keyof VariableOutput, value: any) => {
+    const updated = step.variables_output.map(o =>
+      o.id === id ? { ...o, [field]: value } : o
+    );
+    onChange({ variables_output: updated });
+  };
+
+  const removeOutput = (id: string) => {
+    onChange({ variables_output: step.variables_output.filter(o => o.id !== id) });
+  };
+
+  return (
+    <div className="form-section">
+      <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+        Variable Outputs
+        <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addOutput}>Add</ExButton>
+      </div>
+
+      {step.variables_output.map(output => (
+        <div key={output.id} style={{
+          padding: '12px',
+          marginBottom: '8px',
+          border: '1px solid var(--exo-color-border, #e0e0e0)',
+          borderRadius: '6px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+            <ExIconButton type={IconButtonType.SECONDARY} flavor={IconButtonFlavor.RISKY} icon="delete" label="Delete output" onClick={() => removeOutput(output.id)} />
+          </div>
+          <div className="form-row">
+            <ExInput
+              label="Variable Name"
+              value={output.variable_name}
+              placeholder="e.g., user_data"
+              onInput={(e: any) => updateOutput(output.id, 'variable_name', e.target.value)}
+            />
+            <ExSelect
+              label="Response Location"
+              selected={output.response_location}
+              valueBasedSelection
+              onChange={(e: any) => {
+                const val = e.detail?.value;
+                if (val) updateOutput(output.id, 'response_location', val);
+              }}
+            >
+              <ExMenuItem value="data">Data</ExMenuItem>
+              <ExMenuItem value="headers">Headers</ExMenuItem>
+              <ExMenuItem value="status">Status</ExMenuItem>
+            </ExSelect>
+          </div>
+          <div className="form-row">
+            <ExInput
+              label="JSON Path"
+              value={output.json_path}
+              placeholder="e.g., $.data.users"
+              onInput={(e: any) => updateOutput(output.id, 'json_path', e.target.value)}
+            />
+            <ExSelect
+              label="Format"
+              selected={output.format}
+              valueBasedSelection
+              onChange={(e: any) => {
+                const val = e.detail?.value;
+                if (val) updateOutput(output.id, 'format', val);
+              }}
+            >
+              <ExMenuItem value="json">JSON</ExMenuItem>
+              <ExMenuItem value="text">Text</ExMenuItem>
+            </ExSelect>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

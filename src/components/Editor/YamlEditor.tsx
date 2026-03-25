@@ -1,0 +1,119 @@
+import { useRef, useEffect } from 'react';
+import { EditorView } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
+import { basicSetup } from 'codemirror';
+import { yaml } from '@codemirror/lang-yaml';
+import { ExButton, ExAlertBanner, ButtonType, ButtonFlavor, AlertBannerType, AlertBannerVariant } from '@boomi/exosphere';
+import { useConnector } from '../../context/ConnectorContext';
+import { useYamlSync } from '../../hooks/useYamlSync';
+
+export default function YamlEditor() {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | undefined>(undefined);
+  const { yamlText, yamlError } = useConnector();
+  const { handleEditorChange } = useYamlSync();
+  const isInternalUpdate = useRef(false);
+
+  // Initialize CodeMirror
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    const updateListener = EditorView.updateListener.of((update) => {
+      if (update.docChanged && !isInternalUpdate.current) {
+        handleEditorChange(update.state.doc.toString());
+      }
+    });
+
+    const state = EditorState.create({
+      doc: yamlText,
+      extensions: [
+        basicSetup,
+        yaml(),
+        updateListener,
+        EditorView.theme({
+          '&': { height: '100%' },
+          '.cm-scroller': { overflow: 'auto' },
+          '.cm-content': { fontFamily: 'monospace', fontSize: '13px' },
+          '.cm-gutters': {
+            background: 'var(--exo-color-background-secondary, #f5f5f5)',
+            border: 'none',
+          },
+        }),
+      ],
+    });
+
+    const view = new EditorView({
+      state,
+      parent: editorRef.current,
+    });
+
+    viewRef.current = view;
+
+    return () => {
+      view.destroy();
+    };
+  }, []);
+
+  // Sync YAML text from state to editor (when changed from UI)
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+
+    const currentContent = view.state.doc.toString();
+    if (currentContent !== yamlText) {
+      isInternalUpdate.current = true;
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: yamlText,
+        },
+      });
+      isInternalUpdate.current = false;
+    }
+  }, [yamlText]);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(yamlText);
+      // Toast will be shown via Exosphere alert-toast
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 16px',
+        borderBottom: '1px solid var(--exo-color-border, #e0e0e0)',
+        background: 'var(--exo-color-background-secondary, #f5f5f5)',
+      }}>
+        <span style={{ fontWeight: 600, fontSize: '13px' }}>YAML Configuration</span>
+        <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BRANDED} onClick={copyToClipboard}>
+          Copy YAML
+        </ExButton>
+      </div>
+
+      {yamlError && (
+        <ExAlertBanner type={AlertBannerType.ERROR} variant={AlertBannerVariant.INLINE}>
+          {yamlError}
+        </ExAlertBanner>
+      )}
+
+      <div ref={editorRef} style={{ flex: 1, overflow: 'hidden' }} />
+
+      <div style={{
+        padding: '8px 16px',
+        borderTop: '1px solid var(--exo-color-border, #e0e0e0)',
+        fontSize: '11px',
+        color: 'var(--exo-color-font-secondary, #666)',
+      }}>
+        Edit YAML directly — changes sync to UI after 1 second
+      </div>
+    </div>
+  );
+}

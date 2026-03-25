@@ -1,0 +1,182 @@
+import { useState, useEffect, useRef } from 'react';
+import { ConnectorProvider } from './context/ConnectorContext';
+import { ExButton, ButtonType, ButtonFlavor } from '@boomi/exosphere';
+import { useTheme } from './hooks/useTheme';
+import ConnectorForm from './components/ConnectorConfig/ConnectorForm';
+import ParameterList from './components/Parameters/ParameterList';
+import StepList from './components/Steps/StepList';
+import YamlEditor from './components/Editor/YamlEditor';
+import TemplateSelector from './components/Templates/TemplateSelector';
+import ThemeToggle from './components/Layout/ThemeToggle';
+
+const TABS = ['Connector Configuration', 'Interface Parameters', 'Workflow Steps'];
+
+function TabBar({ activeTab, onSelect }: { activeTab: number; onSelect: (i: number) => void }) {
+  return (
+    <div className="tab-bar" role="tablist">
+      {TABS.map((label, i) => (
+        <button
+          key={i}
+          role="tab"
+          aria-selected={activeTab === i}
+          className={`tab-bar-item${activeTab === i ? ' tab-bar-item--active' : ''}`}
+          onClick={() => onSelect(i)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TabContent({ activeTab }: { activeTab: number }) {
+  switch (activeTab) {
+    case 0: return <ConnectorForm />;
+    case 1: return <ParameterList />;
+    case 2: return <StepList />;
+    default: return <ConnectorForm />;
+  }
+}
+
+function AppContent() {
+  const [activeTab, setActiveTab] = useState(0);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [isWide, setIsWide] = useState(true);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
+  const [sidePanelRatio, setSidePanelRatio] = useState(0.5);
+  const [isBottomPanelOpen, setIsBottomPanelOpen] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef<'vertical' | 'horizontal' | null>(null);
+  const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsWide(entry.contentRect.width >= 720);
+      }
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleBottomDragStart = () => {
+    startDrag('vertical', (e) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setBottomPanelHeight(Math.max(120, Math.min(rect.bottom - e.clientY, 500)));
+    });
+  };
+
+  const handleSideDragStart = () => {
+    startDrag('horizontal', (e) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const ratio = (rect.right - e.clientX) / rect.width;
+      setSidePanelRatio(Math.max(0.2, Math.min(ratio, 0.7)));
+    });
+  };
+
+  function startDrag(axis: 'vertical' | 'horizontal', onMove: (e: MouseEvent) => void) {
+    isDragging.current = axis;
+    document.body.style.cursor = axis === 'vertical' ? 'ns-resize' : 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      onMove(e);
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }
+
+  return (
+    <div className="app-shell" ref={containerRef}>
+      <div className="app-header">
+        <div className="app-header-left">
+          <div className="app-logo">
+            <div className="app-logo-mark">YB</div>
+            <span className="app-logo-text">YAML Builder</span>
+          </div>
+          <ExButton
+            flavor={ButtonFlavor.BASE}
+            type={ButtonType.SECONDARY}
+            onClick={() => setShowTemplates(true)}
+          >
+            Templates
+          </ExButton>
+        </div>
+        <div className="app-header-right">
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          {!isWide && (
+            <ExButton
+              flavor={ButtonFlavor.BASE}
+              type={ButtonType.SECONDARY}
+              onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)}
+            >
+              {isBottomPanelOpen ? 'Hide YAML' : 'Show YAML'}
+            </ExButton>
+          )}
+        </div>
+      </div>
+
+      {isWide ? (
+        <div className="app-body" style={{ flexDirection: 'row' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+            <TabBar activeTab={activeTab} onSelect={setActiveTab} />
+            <div className="tab-content">
+              <TabContent activeTab={activeTab} />
+            </div>
+          </div>
+          <div className="side-resizer" onMouseDown={handleSideDragStart}>
+            <div className="side-resizer-line" />
+          </div>
+          <div className="yaml-side-panel" style={{ width: `${sidePanelRatio * 100}%`, flex: 'none' }}>
+            <YamlEditor />
+          </div>
+        </div>
+      ) : (
+        <div className="app-body" style={{ flexDirection: 'column' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <TabBar activeTab={activeTab} onSelect={setActiveTab} />
+            <div className="tab-content">
+              <TabContent activeTab={activeTab} />
+            </div>
+          </div>
+          {isBottomPanelOpen && (
+            <div className="yaml-bottom-panel" style={{ height: bottomPanelHeight }}>
+              <div className="yaml-bottom-handle" onMouseDown={handleBottomDragStart}>
+                <div className="yaml-bottom-handle-bar" />
+              </div>
+              <YamlEditor />
+            </div>
+          )}
+        </div>
+      )}
+
+      {showTemplates && (
+        <TemplateSelector onClose={() => setShowTemplates(false)} />
+      )}
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ConnectorProvider>
+      <AppContent />
+    </ConnectorProvider>
+  );
+}
+
+export default App;
