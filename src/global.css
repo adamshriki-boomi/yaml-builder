@@ -128,11 +128,20 @@ html, body, #root {
 
 .tab-bar {
   display: flex;
+  align-items: center;
+  justify-content: center;
   border-bottom: 2px solid var(--exo-color-border, #e0e0e0);
   flex-shrink: 0;
   background: var(--exo-color-background, #fff);
-  padding: 0 16px;
+  padding: 2px 16px 0;
   gap: 0;
+}
+
+.tab-bar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--exo-color-border, #e0e0e0);
+  flex-shrink: 0;
 }
 
 .tab-bar-item {
@@ -258,12 +267,10 @@ html, body, #root {
 }
 
 .form-section-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   margin-bottom: 14px;
-  color: var(--exo-color-font-secondary, #666);
+  color: var(--exo-color-font, #333);
 }
 
 .form-row {

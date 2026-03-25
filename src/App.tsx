@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ConnectorProvider } from './context/ConnectorContext';
 import { ExButton, ButtonType, ButtonFlavor } from '@boomi/exosphere';
 import { useTheme } from './hooks/useTheme';
@@ -15,15 +15,17 @@ function TabBar({ activeTab, onSelect }: { activeTab: number; onSelect: (i: numb
   return (
     <div className="tab-bar" role="tablist">
       {TABS.map((label, i) => (
-        <button
-          key={i}
-          role="tab"
-          aria-selected={activeTab === i}
-          className={`tab-bar-item${activeTab === i ? ' tab-bar-item--active' : ''}`}
-          onClick={() => onSelect(i)}
-        >
-          {label}
-        </button>
+        <React.Fragment key={i}>
+          {i > 0 && <span className="tab-bar-divider" />}
+          <button
+            role="tab"
+            aria-selected={activeTab === i}
+            className={`tab-bar-item${activeTab === i ? ' tab-bar-item--active' : ''}`}
+            onClick={() => onSelect(i)}
+          >
+            {label}
+          </button>
+        </React.Fragment>
       ))}
     </div>
   );

@@ -12,12 +12,11 @@ test.describe('Tab navigation and content', () => {
     await expect(activeTab).toHaveText('Connector Configuration');
   });
 
-  test('Connector Configuration tab shows all four sections', async ({ page }) => {
+  test('Connector Configuration tab shows all four accordion sections', async ({ page }) => {
     const content = page.locator('.tab-content');
-    await expect(content.locator('.form-section-title', { hasText: 'Basic Configuration' })).toBeVisible();
-    await expect(content.locator('.form-section-title', { hasText: 'Default Headers' })).toBeVisible();
-    await expect(content.locator('.form-section-title', { hasText: 'Authentication' })).toBeVisible();
-    await expect(content.locator('.form-section-title', { hasText: 'Variables Metadata' })).toBeVisible();
+    // Sections are now inside ex-accordion-item elements
+    const accordionItems = content.locator('ex-accordion-item');
+    expect(await accordionItems.count()).toBeGreaterThanOrEqual(4);
 
     const exInputs = content.locator('ex-input');
     expect(await exInputs.count()).toBeGreaterThanOrEqual(3);
@@ -29,30 +28,33 @@ test.describe('Tab navigation and content', () => {
     await page.locator('.tab-bar-item', { hasText: 'Interface Parameters' }).click();
     await page.waitForTimeout(300);
     await expect(page.locator('.tab-bar-item--active')).toHaveText('Interface Parameters');
-    await expect(page.locator('.tab-content .form-section-title', { hasText: 'Interface Parameters' })).toBeVisible();
+    // Parameters tab has an accordion with "Existing Parameters" label
+    await expect(page.locator('.tab-content ex-accordion-item')).toHaveCount(1);
   });
 
   test('clicking Workflow Steps tab switches content', async ({ page }) => {
     await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(300);
     await expect(page.locator('.tab-bar-item--active')).toHaveText('Workflow Steps');
-    await expect(page.locator('.tab-content .form-section-title', { hasText: 'Workflow Steps' })).toBeVisible();
+    // Steps tab has an accordion with "Existing Steps" label
+    await expect(page.locator('.tab-content ex-accordion-item')).toHaveCount(1);
   });
 
   test('can cycle through all tabs and back', async ({ page }) => {
-    await expect(page.locator('.tab-content .form-section-title', { hasText: 'Basic Configuration' })).toBeVisible();
+    // Connector Config: 4 accordion items
+    expect(await page.locator('.tab-content ex-accordion-item').count()).toBeGreaterThanOrEqual(4);
 
     await page.locator('.tab-bar-item', { hasText: 'Interface Parameters' }).click();
     await page.waitForTimeout(300);
-    await expect(page.locator('.tab-content .form-section-title', { hasText: 'Interface Parameters' })).toBeVisible();
+    expect(await page.locator('.tab-content ex-accordion-item').count()).toBe(1);
 
     await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(300);
-    await expect(page.locator('.tab-content .form-section-title', { hasText: 'Workflow Steps' })).toBeVisible();
+    expect(await page.locator('.tab-content ex-accordion-item').count()).toBe(1);
 
     await page.locator('.tab-bar-item', { hasText: 'Connector Configuration' }).click();
     await page.waitForTimeout(300);
-    await expect(page.locator('.tab-content .form-section-title', { hasText: 'Basic Configuration' })).toBeVisible();
+    expect(await page.locator('.tab-content ex-accordion-item').count()).toBeGreaterThanOrEqual(4);
   });
 });
 

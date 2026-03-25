@@ -42,8 +42,7 @@ export default function AuthConfigSection() {
   };
 
   return (
-    <div className="form-section">
-      <div className="form-section-title">Authentication</div>
+    <div>
       <div className="form-field">
         <ExSelect
           label="Auth Type"
