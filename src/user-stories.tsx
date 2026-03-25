@@ -7,6 +7,6 @@ import UserStoriesPage from './components/UserStories/UserStoriesPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <UserStoriesPage onBack={() => { window.location.href = '/'; }} />
+    <UserStoriesPage onBack={() => { window.location.href = import.meta.env.BASE_URL; }} />
   </StrictMode>,
 )
