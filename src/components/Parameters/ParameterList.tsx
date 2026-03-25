@@ -1,4 +1,5 @@
-import { ExButton, ExInput, ExSelect, ExToggle, ExLabel, ExIconButton, ExMenuItem, ExAccordion, ExAccordionItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, AccordionVariant } from '@boomi/exosphere';
+import { ExButton, ExInput, ExSelect, ExToggle, ExLabel, ExIconButton, ExMenuItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
+import CollapsibleSection from '../Layout/CollapsibleSection';
 import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
 import type { InterfaceParameter } from '../../types/connector';
 
@@ -49,12 +50,7 @@ export default function ParameterList() {
 
   return (
     <div>
-      <ExAccordion variant={AccordionVariant.FLAT} allowMultiple>
-        <ExAccordionItem
-          label={`Existing Parameters (${config.interface_parameters.length})`}
-          open
-          variant={AccordionVariant.FLAT}
-        >
+      <CollapsibleSection label={`Existing Parameters (${config.interface_parameters.length})`}>
           {config.interface_parameters.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px', color: 'var(--exo-color-font, #333)' }}>
@@ -170,8 +166,7 @@ export default function ParameterList() {
               </div>
             ))
           )}
-        </ExAccordionItem>
-      </ExAccordion>
+      </CollapsibleSection>
 
       <div style={{ marginTop: '16px' }}>
         <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addParameter}>

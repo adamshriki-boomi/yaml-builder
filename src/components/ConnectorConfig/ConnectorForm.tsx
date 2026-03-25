@@ -1,7 +1,8 @@
-import { ExInput, ExSelect, ExButton, ExIconButton, ExMenuItem, ExAccordion, ExAccordionItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, AccordionVariant } from '@boomi/exosphere';
+import { ExInput, ExSelect, ExButton, ExIconButton, ExMenuItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
 import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
 import type { Header } from '../../types/connector';
 import AuthConfigSection from './AuthConfig';
+import CollapsibleSection from '../Layout/CollapsibleSection';
 
 export default function ConnectorForm() {
   const { config } = useConnector();
@@ -46,107 +47,101 @@ export default function ConnectorForm() {
 
   return (
     <div>
-      <ExAccordion variant={AccordionVariant.FLAT} allowMultiple>
-        {/* Basic Configuration */}
-        <ExAccordionItem label="Basic Configuration" open variant={AccordionVariant.FLAT}>
-          <div className="form-field">
+      <CollapsibleSection label="Basic Configuration">
+        <div className="form-field">
+          <ExInput
+            label="Connector Name"
+            value={config.connector_name}
+            placeholder="e.g., GitHub API Connector"
+            onInput={(e: any) => updateField('connector_name', e.target.value)}
+          />
+        </div>
+        <div className="form-field">
+          <ExInput
+            label="Base URL"
+            value={config.base_url}
+            placeholder="e.g., https://api.example.com/v1"
+            onInput={(e: any) => updateField('base_url', e.target.value)}
+          />
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection label="Default Headers">
+        {config.default_headers.length === 0 && (
+          <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+            No default headers configured. Add headers that will be included in every request.
+          </p>
+        )}
+        {config.default_headers.map(header => (
+          <div key={header.id} className="form-row" style={{ alignItems: 'flex-end' }}>
             <ExInput
-              label="Connector Name"
-              value={config.connector_name}
-              placeholder="e.g., GitHub API Connector"
-              onInput={(e: any) => updateField('connector_name', e.target.value)}
+              label="Header Name"
+              value={header.name}
+              placeholder="e.g., Content-Type"
+              onInput={(e: any) => updateHeader(header.id, 'name', e.target.value)}
+            />
+            <ExInput
+              label="Header Value"
+              value={header.value}
+              placeholder="e.g., application/json"
+              onInput={(e: any) => updateHeader(header.id, 'value', e.target.value)}
+            />
+            <ExIconButton
+              type={IconButtonType.SECONDARY}
+              flavor={IconButtonFlavor.RISKY}
+              icon="delete"
+              label="Delete header"
+              onClick={() => removeHeader(header.id)}
             />
           </div>
-          <div className="form-field">
-            <ExInput
-              label="Base URL"
-              value={config.base_url}
-              placeholder="e.g., https://api.example.com/v1"
-              onInput={(e: any) => updateField('base_url', e.target.value)}
-            />
-          </div>
-        </ExAccordionItem>
+        ))}
+        <div style={{ marginTop: '8px' }}>
+          <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addHeader}>
+            + Add Header
+          </ExButton>
+        </div>
+      </CollapsibleSection>
 
-        {/* Default Headers */}
-        <ExAccordionItem label="Default Headers" open variant={AccordionVariant.FLAT}>
-          {config.default_headers.length === 0 && (
-            <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
-              No default headers configured. Add headers that will be included in every request.
-            </p>
-          )}
-          {config.default_headers.map(header => (
-            <div key={header.id} className="form-row" style={{ alignItems: 'flex-end' }}>
-              <ExInput
-                label="Header Name"
-                value={header.name}
-                placeholder="e.g., Content-Type"
-                onInput={(e: any) => updateHeader(header.id, 'name', e.target.value)}
-              />
-              <ExInput
-                label="Header Value"
-                value={header.value}
-                placeholder="e.g., application/json"
-                onInput={(e: any) => updateHeader(header.id, 'value', e.target.value)}
-              />
-              <ExIconButton
-                type={IconButtonType.SECONDARY}
-                flavor={IconButtonFlavor.RISKY}
-                icon="delete"
-                label="Delete header"
-                onClick={() => removeHeader(header.id)}
-              />
-            </div>
-          ))}
-          <div style={{ marginTop: '8px' }}>
-            <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addHeader}>
-              + Add Header
-            </ExButton>
-          </div>
-        </ExAccordionItem>
+      <CollapsibleSection label="Authentication">
+        <AuthConfigSection />
+      </CollapsibleSection>
 
-        {/* Authentication */}
-        <ExAccordionItem label="Authentication" open variant={AccordionVariant.FLAT}>
-          <AuthConfigSection />
-        </ExAccordionItem>
-
-        {/* Variables Metadata */}
-        <ExAccordionItem label="Variables Metadata" open variant={AccordionVariant.FLAT}>
-          <div className="form-row">
-            <ExSelect
-              label="Storage"
-              selected={config.variables_metadata.storage}
-              valueBasedSelection
-              onChange={(e: any) => {
-                const val = e.detail?.value;
-                if (val) updateVariablesMeta('storage', val);
-              }}
-            >
-              <ExMenuItem value="file_system">File System</ExMenuItem>
-              <ExMenuItem value="memory">Memory</ExMenuItem>
-            </ExSelect>
-            <ExSelect
-              label="Data Format"
-              selected={config.variables_metadata.data_format}
-              valueBasedSelection
-              onChange={(e: any) => {
-                const val = e.detail?.value;
-                if (val) updateVariablesMeta('data_format', val);
-              }}
-            >
-              <ExMenuItem value="json">JSON</ExMenuItem>
-              <ExMenuItem value="text">Text</ExMenuItem>
-            </ExSelect>
-          </div>
-          <div className="form-field">
-            <ExInput
-              label="Results Directory (optional)"
-              value={config.variables_metadata.results_dir}
-              placeholder="e.g., /output/results"
-              onInput={(e: any) => updateVariablesMeta('results_dir', e.target.value)}
-            />
-          </div>
-        </ExAccordionItem>
-      </ExAccordion>
+      <CollapsibleSection label="Variables Metadata">
+        <div className="form-row">
+          <ExSelect
+            label="Storage"
+            selected={config.variables_metadata.storage}
+            valueBasedSelection
+            onChange={(e: any) => {
+              const val = e.detail?.value;
+              if (val) updateVariablesMeta('storage', val);
+            }}
+          >
+            <ExMenuItem value="file_system">File System</ExMenuItem>
+            <ExMenuItem value="memory">Memory</ExMenuItem>
+          </ExSelect>
+          <ExSelect
+            label="Data Format"
+            selected={config.variables_metadata.data_format}
+            valueBasedSelection
+            onChange={(e: any) => {
+              const val = e.detail?.value;
+              if (val) updateVariablesMeta('data_format', val);
+            }}
+          >
+            <ExMenuItem value="json">JSON</ExMenuItem>
+            <ExMenuItem value="text">Text</ExMenuItem>
+          </ExSelect>
+        </div>
+        <div className="form-field">
+          <ExInput
+            label="Results Directory (optional)"
+            value={config.variables_metadata.results_dir}
+            placeholder="e.g., /output/results"
+            onInput={(e: any) => updateVariablesMeta('results_dir', e.target.value)}
+          />
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }

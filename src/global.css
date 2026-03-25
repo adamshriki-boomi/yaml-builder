@@ -240,6 +240,52 @@ html, body, #root {
    FORM ELEMENTS
    ============================== */
 
+/* ==============================
+   COLLAPSIBLE SECTION
+   ============================== */
+
+.collapsible-section {
+  margin-bottom: 4px;
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px 8px 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.collapsible-header:hover {
+  background: var(--exo-color-background-secondary, #f5f5f5);
+}
+
+.collapsible-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--exo-color-font, #333);
+}
+
+.collapsible-divider {
+  height: 1px;
+  background: var(--exo-color-border, #e0e0e0);
+  margin: 2px 0;
+}
+
+.collapsible-body {
+  padding: 12px 0 0;
+}
+
+/* ==============================
+   FORM ELEMENTS
+   ============================== */
+
 .form-section {
   margin-bottom: 24px;
 }

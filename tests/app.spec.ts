@@ -14,8 +14,8 @@ test.describe('Tab navigation and content', () => {
 
   test('Connector Configuration tab shows all four accordion sections', async ({ page }) => {
     const content = page.locator('.tab-content');
-    // Sections are now inside ex-accordion-item elements
-    const accordionItems = content.locator('ex-accordion-item');
+    // Sections are now inside .collapsible-section elements
+    const accordionItems = content.locator('.collapsible-section');
     expect(await accordionItems.count()).toBeGreaterThanOrEqual(4);
 
     const exInputs = content.locator('ex-input');
@@ -29,7 +29,7 @@ test.describe('Tab navigation and content', () => {
     await page.waitForTimeout(300);
     await expect(page.locator('.tab-bar-item--active')).toHaveText('Interface Parameters');
     // Parameters tab has an accordion with "Existing Parameters" label
-    await expect(page.locator('.tab-content ex-accordion-item')).toHaveCount(1);
+    await expect(page.locator('.tab-content .collapsible-section')).toHaveCount(1);
   });
 
   test('clicking Workflow Steps tab switches content', async ({ page }) => {
@@ -37,24 +37,24 @@ test.describe('Tab navigation and content', () => {
     await page.waitForTimeout(300);
     await expect(page.locator('.tab-bar-item--active')).toHaveText('Workflow Steps');
     // Steps tab has an accordion with "Existing Steps" label
-    await expect(page.locator('.tab-content ex-accordion-item')).toHaveCount(1);
+    await expect(page.locator('.tab-content .collapsible-section')).toHaveCount(1);
   });
 
   test('can cycle through all tabs and back', async ({ page }) => {
     // Connector Config: 4 accordion items
-    expect(await page.locator('.tab-content ex-accordion-item').count()).toBeGreaterThanOrEqual(4);
+    expect(await page.locator('.tab-content .collapsible-section').count()).toBeGreaterThanOrEqual(4);
 
     await page.locator('.tab-bar-item', { hasText: 'Interface Parameters' }).click();
     await page.waitForTimeout(300);
-    expect(await page.locator('.tab-content ex-accordion-item').count()).toBe(1);
+    expect(await page.locator('.tab-content .collapsible-section').count()).toBe(1);
 
     await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(300);
-    expect(await page.locator('.tab-content ex-accordion-item').count()).toBe(1);
+    expect(await page.locator('.tab-content .collapsible-section').count()).toBe(1);
 
     await page.locator('.tab-bar-item', { hasText: 'Connector Configuration' }).click();
     await page.waitForTimeout(300);
-    expect(await page.locator('.tab-content ex-accordion-item').count()).toBeGreaterThanOrEqual(4);
+    expect(await page.locator('.tab-content .collapsible-section').count()).toBeGreaterThanOrEqual(4);
   });
 });
 

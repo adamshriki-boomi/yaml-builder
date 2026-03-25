@@ -1,4 +1,5 @@
-import { ExButton, ExBadge, ExIconButton, ExAccordion, ExAccordionItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, BadgeColor, AccordionVariant } from '@boomi/exosphere';
+import { ExButton, ExBadge, ExIconButton, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, BadgeColor } from '@boomi/exosphere';
+import CollapsibleSection from '../Layout/CollapsibleSection';
 import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
 import { createRestStep, createLoopStep, type WorkflowStep, type RestStep } from '../../types/connector';
 import RestStepForm from './RestStepForm';
@@ -72,12 +73,7 @@ export default function StepList() {
 
   return (
     <div>
-      <ExAccordion variant={AccordionVariant.FLAT} allowMultiple>
-        <ExAccordionItem
-          label={`Existing Steps (${config.steps.length})`}
-          open
-          variant={AccordionVariant.FLAT}
-        >
+      <CollapsibleSection label={`Existing Steps (${config.steps.length})`}>
           {config.steps.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px', color: 'var(--exo-color-font, #333)' }}>
@@ -165,8 +161,7 @@ export default function StepList() {
               </div>
             ))
           )}
-        </ExAccordionItem>
-      </ExAccordion>
+      </CollapsibleSection>
 
       <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
         <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={() => addStep('rest')}>
