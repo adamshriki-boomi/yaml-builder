@@ -1,11 +1,13 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { yaml } from '@codemirror/lang-yaml';
+import { undo, redo } from '@codemirror/commands';
 import { ExAlertBanner, ExIconButton, AlertBannerType, AlertBannerVariant, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
 import { useConnector } from '../../context/ConnectorContext';
 import { useYamlSync } from '../../hooks/useYamlSync';
+import { stringify, parse } from 'yaml';
 
 interface YamlEditorProps {
   onTestToggle?: () => void;
@@ -18,8 +20,8 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
   const { yamlText, yamlError } = useConnector();
   const { handleEditorChange } = useYamlSync();
   const isInternalUpdate = useRef(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
-  // Initialize CodeMirror
   useEffect(() => {
     if (!editorRef.current) return;
 
@@ -59,7 +61,6 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
     };
   }, []);
 
-  // Sync YAML text from state to editor (when changed from UI)
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
@@ -81,22 +82,70 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(yamlText);
+      setCopyFeedback(true);
+      setTimeout(() => setCopyFeedback(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
     }
   };
 
+  const handleUndo = useCallback(() => {
+    const view = viewRef.current;
+    if (view) undo(view);
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    const view = viewRef.current;
+    if (view) redo(view);
+  }, []);
+
+  const handleFormat = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const currentText = view.state.doc.toString();
+    try {
+      const parsed = parse(currentText);
+      const formatted = stringify(parsed, { indent: 2, lineWidth: 0 });
+      isInternalUpdate.current = true;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: formatted },
+      });
+      isInternalUpdate.current = false;
+      handleEditorChange(formatted);
+    } catch {
+      // Invalid YAML — can't format
+    }
+  }, [handleEditorChange]);
+
+  const handleCompact = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const currentText = view.state.doc.toString();
+    try {
+      const parsed = parse(currentText);
+      const compacted = stringify(parsed, { indent: 2, lineWidth: 80 });
+      isInternalUpdate.current = true;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: compacted },
+      });
+      isInternalUpdate.current = false;
+      handleEditorChange(compacted);
+    } catch {
+      // Invalid YAML — can't compact
+    }
+  }, [handleEditorChange]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="editor-toolbar">
         <div className="editor-toolbar-group">
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="sliders" label="Format" />
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="columns" label="Compact" />
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="sliders" label="Format YAML" onClick={handleFormat} />
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="columns" label="Compact YAML" onClick={handleCompact} />
         </div>
         <div className="editor-toolbar-divider" />
         <div className="editor-toolbar-group">
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-arrow-single" label="Undo" />
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-double-arrow" label="Redo" />
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-arrow-single" label="Undo" onClick={handleUndo} />
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-double-arrow" label="Redo" onClick={handleRedo} />
         </div>
         <div className="editor-toolbar-divider" />
         <div className="editor-toolbar-group">
@@ -112,6 +161,14 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
           )}
         </div>
       </div>
+
+      {copyFeedback && (
+        <div style={{ padding: '4px 16px' }}>
+          <ExAlertBanner type={AlertBannerType.SUCCESS} variant={AlertBannerVariant.INLINE}>
+            YAML copied to clipboard
+          </ExAlertBanner>
+        </div>
+      )}
 
       {yamlError && (
         <ExAlertBanner type={AlertBannerType.ERROR} variant={AlertBannerVariant.INLINE}>
