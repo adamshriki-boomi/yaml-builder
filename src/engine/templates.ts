@@ -4,6 +4,7 @@ export interface Template {
   id: string;
   name: string;
   description: string;
+  tags: string[];
   config: ConnectorConfig;
 }
 
@@ -12,6 +13,7 @@ export const templates: Template[] = [
     id: 'basic-connector',
     name: 'Basic Connector',
     description: 'Minimal connector configuration with a single GET request in a report',
+    tags: ['AUTH'],
     config: {
       connector_name: 'My REST Connector',
       base_url: 'https://api.example.com/v1',
@@ -70,6 +72,7 @@ export const templates: Template[] = [
     id: 'cursor-pagination',
     name: 'Cursor Pagination',
     description: 'API connector with cursor-based pagination and token extraction',
+    tags: ['PAGINATION', 'AUTH'],
     config: {
       connector_name: 'Paginated API Connector',
       base_url: 'https://api.example.com/v1',
@@ -132,6 +135,7 @@ export const templates: Template[] = [
     id: 'external-variables-loop',
     name: 'External Variables Loop',
     description: 'Loop through external variables to process items from a source river',
+    tags: ['AUTH'],
     config: {
       connector_name: 'External Variables Connector',
       base_url: 'https://api.example.com/v1',
@@ -215,6 +219,7 @@ export const templates: Template[] = [
     id: 'multi-report-blueprint',
     name: 'Multi-Report Blueprint',
     description: 'Full PRD-style multi-report blueprint with pre-run, multiple reports, and post-run',
+    tags: ['MULTI-REPORT', 'AUTH', 'PAGINATION'],
     config: {
       connector_name: 'My Multi-Report Connector',
       base_url: 'https://api.example.com',

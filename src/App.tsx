@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ConnectorProvider } from './context/ConnectorContext';
-import { ExButton, ButtonType, ButtonFlavor } from '@boomi/exosphere';
 import ConnectorForm from './components/ConnectorConfig/ConnectorForm';
 import ParameterList from './components/Parameters/ParameterList';
 import StepList from './components/Steps/StepList';
 import YamlEditor from './components/Editor/YamlEditor';
-import TemplateSelector from './components/Templates/TemplateSelector';
+import TestPanel from './components/Test/TestPanel';
+import TemplateDrawer from './components/Templates/TemplateDrawer';
 
 const TABS = ['Connector Configuration', 'Interface Parameters', 'Workflow Steps'];
 
@@ -40,11 +40,12 @@ function TabContent({ activeTab }: { activeTab: number }) {
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState(0);
-  const [showTemplates, setShowTemplates] = useState(false);
+  const [topTab, setTopTab] = useState<'editor' | 'test'>('editor');
+  const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
   const [isWide, setIsWide] = useState(true);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
   const [sidePanelRatio, setSidePanelRatio] = useState(0.5);
-  const [isBottomPanelOpen, setIsBottomPanelOpen] = useState(true);
+  const [isBottomPanelOpen] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<'vertical' | 'horizontal' | null>(null);
 
@@ -59,7 +60,7 @@ function AppContent() {
     if (!container) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setIsWide(entry.contentRect.width >= 720);
+        setIsWide(entry.contentRect.width >= 900);
       }
     });
     observer.observe(container);
@@ -105,42 +106,19 @@ function AppContent() {
     document.addEventListener('mouseup', handleMouseUp);
   }
 
-  return (
-    <div className="app-shell" ref={containerRef}>
-      <div className="app-header">
-        <div className="app-header-left">
-          <div className="app-logo">
-            <div className="app-logo-mark">YB</div>
-            <span className="app-logo-text">YAML Builder</span>
-          </div>
-          <ExButton
-            flavor={ButtonFlavor.BASE}
-            type={ButtonType.SECONDARY}
-            onClick={() => setShowTemplates(true)}
-          >
-            Templates
-          </ExButton>
-        </div>
-        <div className="app-header-right">
-          {!isWide && (
-            <ExButton
-              flavor={ButtonFlavor.BASE}
-              type={ButtonType.SECONDARY}
-              onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)}
-            >
-              {isBottomPanelOpen ? 'Hide YAML' : 'Show YAML'}
-            </ExButton>
-          )}
-        </div>
-      </div>
-
-      {isWide ? (
+  const renderEditorView = () => {
+    if (isWide) {
+      return (
         <div className="app-body" style={{ flexDirection: 'row' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
             <TabBar activeTab={activeTab} onSelect={setActiveTab} />
             <div className="tab-content">
               <TabContent activeTab={activeTab} />
             </div>
+            <TemplateDrawer
+              open={showTemplateDrawer}
+              onToggle={() => setShowTemplateDrawer(!showTemplateDrawer)}
+            />
           </div>
           <div className="side-resizer" onMouseDown={handleSideDragStart}>
             <div className="side-resizer-line" />
@@ -149,28 +127,76 @@ function AppContent() {
             <YamlEditor />
           </div>
         </div>
-      ) : (
-        <div className="app-body" style={{ flexDirection: 'column' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <TabBar activeTab={activeTab} onSelect={setActiveTab} />
-            <div className="tab-content">
-              <TabContent activeTab={activeTab} />
-            </div>
-          </div>
-          {isBottomPanelOpen && (
-            <div className="yaml-bottom-panel" style={{ height: bottomPanelHeight }}>
-              <div className="yaml-bottom-handle" onMouseDown={handleBottomDragStart}>
-                <div className="yaml-bottom-handle-bar" />
-              </div>
-              <YamlEditor />
-            </div>
-          )}
-        </div>
-      )}
+      );
+    }
 
-      {showTemplates && (
-        <TemplateSelector onClose={() => setShowTemplates(false)} />
-      )}
+    return (
+      <div className="app-body" style={{ flexDirection: 'column' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <TabBar activeTab={activeTab} onSelect={setActiveTab} />
+          <div className="tab-content">
+            <TabContent activeTab={activeTab} />
+          </div>
+          <TemplateDrawer
+            open={showTemplateDrawer}
+            onToggle={() => setShowTemplateDrawer(!showTemplateDrawer)}
+          />
+        </div>
+        {isBottomPanelOpen && (
+          <div className="yaml-bottom-panel" style={{ height: bottomPanelHeight }}>
+            <div className="yaml-bottom-handle" onMouseDown={handleBottomDragStart}>
+              <div className="yaml-bottom-handle-bar" />
+            </div>
+            <YamlEditor />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderTestView = () => (
+    <div className="app-body" style={{ flexDirection: 'row' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <YamlEditor />
+      </div>
+      <div className="side-resizer" onMouseDown={handleSideDragStart}>
+        <div className="side-resizer-line" />
+      </div>
+      <div className="yaml-side-panel" style={{ width: `${sidePanelRatio * 100}%`, flex: 'none' }}>
+        <TestPanel />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="app-shell" ref={containerRef}>
+      <div className="app-header">
+        <div className="app-header-left">
+          <div className="app-logo">
+            <div className="app-logo-mark">YB</div>
+            <span className="app-logo-text">YAML Builder</span>
+          </div>
+        </div>
+        <div className="top-tab-bar">
+          <button
+            className={`top-tab${topTab === 'editor' ? ' top-tab--active' : ''}`}
+            onClick={() => setTopTab('editor')}
+          >
+            Editor
+          </button>
+          <button
+            className={`top-tab${topTab === 'test' ? ' top-tab--active' : ''}`}
+            onClick={() => setTopTab('test')}
+          >
+            Test
+          </button>
+        </div>
+        <div className="app-header-right">
+          {/* Spacer to balance the layout */}
+        </div>
+      </div>
+
+      {topTab === 'editor' ? renderEditorView() : renderTestView()}
     </div>
   );
 }

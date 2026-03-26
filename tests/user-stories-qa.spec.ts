@@ -333,25 +333,26 @@ test.describe('Epic 9: Templates', () => {
     await page.waitForTimeout(2000);
   });
 
-  test('US-9.1: Can select from pre-built templates including Multi-Report Blueprint', async ({ page }) => {
-    await page.getByText('Templates').first().click();
+  test('US-9.1: Template drawer shows all templates when expanded', async ({ page }) => {
+    await page.locator('.template-drawer-trigger').click();
     await page.waitForTimeout(500);
-    await expect(page.locator('ex-dialog')).toHaveCount(1);
-    const hasTemplates = await page.evaluate(() => {
-      const text = document.body.textContent || '';
-      return text.includes('Basic Connector') &&
-        text.includes('Cursor Pagination') &&
-        text.includes('External Variables Loop') &&
-        text.includes('Multi-Report Blueprint');
-    });
-    expect(hasTemplates).toBe(true);
+
+    const tiles = page.locator('.template-tile');
+    await expect(tiles).toHaveCount(4);
+    await expect(page.locator('.template-tile-name', { hasText: 'Multi-Report Blueprint' })).toBeVisible();
   });
 
-  test('US-9.2: Warning message shown before replacing config', async ({ page }) => {
-    await page.getByText('Templates').first().click();
+  test('US-9.2: Clicking a template shows confirmation dialog before applying', async ({ page }) => {
+    await page.locator('.template-drawer-trigger').click();
     await page.waitForTimeout(500);
+
+    await page.locator('.template-tile', { hasText: 'Basic Connector' }).click();
+    await page.waitForTimeout(500);
+
+    // Confirmation dialog should appear with warning
+    await expect(page.locator('ex-dialog')).toHaveCount(1);
     const hasWarning = await page.evaluate(() =>
-      document.body.textContent?.includes('Selecting a template will replace your current configuration')
+      document.body.textContent?.includes('replace all your current configuration')
     );
     expect(hasWarning).toBe(true);
   });
@@ -366,7 +367,7 @@ test.describe('Epic 10: UX & Responsiveness', () => {
     await expect(page.locator('.side-resizer')).toBeVisible();
   });
 
-  test('US-10.1: Responsive bottom panel below 720px', async ({ page }) => {
+  test('US-10.1: Responsive bottom panel below 900px', async ({ page }) => {
     await page.setViewportSize({ width: 600, height: 700 });
     await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);

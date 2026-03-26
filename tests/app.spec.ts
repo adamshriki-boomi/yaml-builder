@@ -86,41 +86,49 @@ test.describe('Templates', () => {
     await page.waitForTimeout(1500);
   });
 
-  test('Templates button opens dialog with all template options', async ({ page }) => {
-    await page.getByText('Templates').first().click();
+  test('Template drawer shows all template options when expanded', async ({ page }) => {
+    // Open the template drawer via the bottom trigger
+    await page.locator('.template-drawer-trigger').click();
     await page.waitForTimeout(500);
-    await expect(page.locator('ex-dialog')).toHaveCount(1);
-    // Check all four templates exist
-    const hasTemplates = await page.evaluate(() => {
-      const text = document.body.textContent || '';
-      return text.includes('Basic Connector') &&
-        text.includes('Cursor Pagination') &&
-        text.includes('External Variables Loop') &&
-        text.includes('Multi-Report Blueprint');
-    });
-    expect(hasTemplates).toBe(true);
+
+    // Template tiles should be visible
+    const tiles = page.locator('.template-tile');
+    await expect(tiles).toHaveCount(4);
+
+    // Check all template names exist
+    await expect(page.locator('.template-tile-name', { hasText: 'Basic Connector' })).toBeVisible();
+    await expect(page.locator('.template-tile-name', { hasText: 'Cursor Pagination' })).toBeVisible();
+    await expect(page.locator('.template-tile-name', { hasText: 'External Variables Loop' })).toBeVisible();
+    await expect(page.locator('.template-tile-name', { hasText: 'Multi-Report Blueprint' })).toBeVisible();
   });
 
-  test('Selecting a template populates YAML editor', async ({ page }) => {
-    await page.getByText('Templates').first().click();
+  test('Selecting a template shows confirmation then populates YAML', async ({ page }) => {
+    // Open drawer
+    await page.locator('.template-drawer-trigger').click();
     await page.waitForTimeout(500);
 
-    // Click the "Basic Connector" template card
+    // Click Basic Connector tile
+    await page.locator('.template-tile', { hasText: 'Basic Connector' }).click();
+    await page.waitForTimeout(500);
+
+    // Confirmation dialog should appear
+    await expect(page.locator('ex-dialog')).toHaveCount(1);
+
+    // Click confirm button
     await page.evaluate(() => {
       const dialog = document.querySelector('ex-dialog');
       if (!dialog) return;
-      const cards = dialog.querySelectorAll('div[style]');
-      for (const card of cards) {
-        const nameEl = card.querySelector('div');
-        if (nameEl && nameEl.textContent?.trim() === 'Basic Connector') {
-          card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const buttons = dialog.querySelectorAll('ex-button');
+      for (const btn of buttons) {
+        if (btn.textContent?.includes('Confirm')) {
+          btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
           return;
         }
       }
     });
     await page.waitForTimeout(2000);
 
-    // After template load, YAML should have content
+    // YAML should have content
     const cmText = await page.evaluate(() => {
       const cmLines = document.querySelectorAll('.cm-line');
       return Array.from(cmLines).map(l => l.textContent).join('\n');
@@ -129,18 +137,20 @@ test.describe('Templates', () => {
   });
 
   test('Multi-Report Blueprint template populates all sections', async ({ page }) => {
-    await page.getByText('Templates').first().click();
+    // Open drawer and select Multi-Report Blueprint
+    await page.locator('.template-drawer-trigger').click();
+    await page.waitForTimeout(500);
+    await page.locator('.template-tile', { hasText: 'Multi-Report Blueprint' }).click();
     await page.waitForTimeout(500);
 
-    // Click the "Multi-Report Blueprint" template card
+    // Confirm
     await page.evaluate(() => {
       const dialog = document.querySelector('ex-dialog');
       if (!dialog) return;
-      const cards = dialog.querySelectorAll('div[style]');
-      for (const card of cards) {
-        const nameEl = card.querySelector('div');
-        if (nameEl && nameEl.textContent?.trim() === 'Multi-Report Blueprint') {
-          card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const buttons = dialog.querySelectorAll('ex-button');
+      for (const btn of buttons) {
+        if (btn.textContent?.includes('Confirm')) {
+          btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
           return;
         }
       }
@@ -151,11 +161,9 @@ test.describe('Templates', () => {
     await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
-    // The Multi-Reports section should show reports (the label includes a count)
     const multiReportsLabel = page.locator('.collapsible-label', { hasText: 'Multi-Reports' });
     await expect(multiReportsLabel).toBeVisible();
     const labelText = await multiReportsLabel.textContent();
-    // Multi-Report Blueprint has 3 reports
     expect(labelText).toContain('3');
   });
 });
