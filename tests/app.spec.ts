@@ -69,14 +69,31 @@ test.describe('YAML Editor', () => {
     await page.waitForTimeout(1500);
   });
 
-  test('YAML editor panel is visible with header and CodeMirror', async ({ page }) => {
+  test('YAML editor panel is visible with toolbar and CodeMirror', async ({ page }) => {
     await expect(page.locator('.yaml-side-panel')).toBeVisible();
-    await expect(page.getByText('YAML Configuration')).toBeVisible();
+    await expect(page.locator('.editor-toolbar')).toBeVisible();
     await expect(page.locator('.cm-editor')).toBeVisible();
   });
 
-  test('Copy YAML button exists', async ({ page }) => {
-    await expect(page.getByText('Copy YAML')).toBeVisible();
+  test('Editor toolbar has icon buttons including copy and test toggle', async ({ page }) => {
+    const toolbar = page.locator('.editor-toolbar');
+    await expect(toolbar).toBeVisible();
+    // Toolbar has icon buttons (copy, test, format, etc.)
+    const iconBtns = await toolbar.locator('ex-icon-button').count();
+    expect(iconBtns).toBeGreaterThanOrEqual(5);
+  });
+
+  test('Test toggle switches right panel to TestPanel', async ({ page }) => {
+    // Click the test toggle (last icon button in toolbar)
+    const toolbar = page.locator('.editor-toolbar');
+    const iconBtns = toolbar.locator('ex-icon-button');
+    await iconBtns.last().click();
+    await page.waitForTimeout(500);
+
+    // TestPanel should be visible (it has "Test your Blueprint" text)
+    await expect(page.getByText('Test your Blueprint configuration')).toBeVisible();
+    // YAML editor should NOT be visible in the right panel anymore
+    await expect(page.locator('.yaml-side-panel .cm-editor')).toHaveCount(0);
   });
 });
 

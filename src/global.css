@@ -36,56 +36,32 @@ html, body, #root {
 }
 
 /* ==============================
-   HEADER
+   EDITOR TOOLBAR
    ============================== */
 
-.app-header {
+.editor-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  height: 48px;
-  border-bottom: 1px solid var(--exo-color-border, #e0e0e0);
-  flex-shrink: 0;
+  padding: 8px;
+  border-bottom: 1px solid var(--exo-color-border-secondary, #e5e5e5);
   background: var(--exo-color-background, #fff);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 2px;
 }
 
-.app-header-left {
+.editor-toolbar-group {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 2px;
 }
 
-.app-header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.app-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.app-logo-mark {
-  width: 24px;
+.editor-toolbar-divider {
+  width: 1px;
   height: 24px;
-  background: var(--exo-color-primary, #0052cc);
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: monospace;
-}
-
-.app-logo-text {
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.3px;
+  background: var(--exo-color-border, #e0e0e0);
+  margin: 0 4px;
+  flex-shrink: 0;
 }
 
 /* ==============================
@@ -352,46 +328,6 @@ html, body, #root {
 /* Dark mode cursor line */
 .ex-theme-dark .cm-cursor {
   border-left-color: var(--exo-color-font, #fff) !important;
-}
-
-/* ==============================
-   TOP TAB BAR (Editor / Test)
-   ============================== */
-
-.top-tab-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.top-tab {
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 16px;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  color: var(--exo-color-font-secondary, #666);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.top-tab:hover {
-  background: var(--exo-color-background-secondary, #f5f5f5);
-  color: var(--exo-color-font, #333);
-}
-
-.top-tab--active {
-  background: var(--exo-color-background-selected-weak, #e5f3fd);
-  color: var(--exo-color-primary, #0052cc);
-  font-weight: 600;
-}
-
-.top-tab--active:hover {
-  background: var(--exo-color-background-selected-weak, #e5f3fd);
-  color: var(--exo-color-primary, #0052cc);
 }
 
 /* ==============================

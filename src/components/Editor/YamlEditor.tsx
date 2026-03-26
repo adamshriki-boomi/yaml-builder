@@ -3,11 +3,16 @@ import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { yaml } from '@codemirror/lang-yaml';
-import { ExButton, ExAlertBanner, ButtonType, ButtonFlavor, AlertBannerType, AlertBannerVariant } from '@boomi/exosphere';
+import { ExAlertBanner, ExIconButton, AlertBannerType, AlertBannerVariant, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
 import { useConnector } from '../../context/ConnectorContext';
 import { useYamlSync } from '../../hooks/useYamlSync';
 
-export default function YamlEditor() {
+interface YamlEditorProps {
+  onTestToggle?: () => void;
+  isTestMode?: boolean;
+}
+
+export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | undefined>(undefined);
   const { yamlText, yamlError } = useConnector();
@@ -76,7 +81,6 @@ export default function YamlEditor() {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(yamlText);
-      // Toast will be shown via Exosphere alert-toast
     } catch (err) {
       console.error('Failed to copy:', err);
     }
@@ -84,18 +88,29 @@ export default function YamlEditor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '8px 16px',
-        borderBottom: '1px solid var(--exo-color-border, #e0e0e0)',
-        background: 'var(--exo-color-background-secondary, #f5f5f5)',
-      }}>
-        <span style={{ fontWeight: 600, fontSize: '13px' }}>YAML Configuration</span>
-        <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BRANDED} onClick={copyToClipboard}>
-          Copy YAML
-        </ExButton>
+      <div className="editor-toolbar">
+        <div className="editor-toolbar-group">
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="sliders" label="Format" />
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="columns" label="Compact" />
+        </div>
+        <div className="editor-toolbar-divider" />
+        <div className="editor-toolbar-group">
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-arrow-single" label="Undo" />
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-double-arrow" label="Redo" />
+        </div>
+        <div className="editor-toolbar-divider" />
+        <div className="editor-toolbar-group">
+          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="copy" label="Copy YAML" onClick={copyToClipboard} />
+          {onTestToggle && (
+            <ExIconButton
+              type={isTestMode ? IconButtonType.PRIMARY : IconButtonType.TERTIARY}
+              flavor={isTestMode ? IconButtonFlavor.BRANDED : IconButtonFlavor.BASE}
+              icon="console-screen"
+              label={isTestMode ? 'Back to YAML Editor' : 'Test Blueprint'}
+              onClick={onTestToggle}
+            />
+          )}
+        </div>
       </div>
 
       {yamlError && (

@@ -40,7 +40,7 @@ function TabContent({ activeTab }: { activeTab: number }) {
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState(0);
-  const [topTab, setTopTab] = useState<'editor' | 'test'>('editor');
+  const [isTestMode, setIsTestMode] = useState(false);
   const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
   const [isWide, setIsWide] = useState(true);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
@@ -106,9 +106,13 @@ function AppContent() {
     document.addEventListener('mouseup', handleMouseUp);
   }
 
-  const renderEditorView = () => {
-    if (isWide) {
-      return (
+  const rightPanel = isTestMode
+    ? <TestPanel />
+    : <YamlEditor onTestToggle={() => setIsTestMode(!isTestMode)} isTestMode={isTestMode} />;
+
+  if (isWide) {
+    return (
+      <div className="app-shell" ref={containerRef}>
         <div className="app-body" style={{ flexDirection: 'row' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
             <TabBar activeTab={activeTab} onSelect={setActiveTab} />
@@ -124,13 +128,15 @@ function AppContent() {
             <div className="side-resizer-line" />
           </div>
           <div className="yaml-side-panel" style={{ width: `${sidePanelRatio * 100}%`, flex: 'none' }}>
-            <YamlEditor />
+            {rightPanel}
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    return (
+  return (
+    <div className="app-shell" ref={containerRef}>
       <div className="app-body" style={{ flexDirection: 'column' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <TabBar activeTab={activeTab} onSelect={setActiveTab} />
@@ -147,56 +153,13 @@ function AppContent() {
             <div className="yaml-bottom-handle" onMouseDown={handleBottomDragStart}>
               <div className="yaml-bottom-handle-bar" />
             </div>
-            <YamlEditor />
+            {isTestMode
+              ? <TestPanel />
+              : <YamlEditor onTestToggle={() => setIsTestMode(!isTestMode)} isTestMode={isTestMode} />
+            }
           </div>
         )}
       </div>
-    );
-  };
-
-  const renderTestView = () => (
-    <div className="app-body" style={{ flexDirection: 'row' }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-        <YamlEditor />
-      </div>
-      <div className="side-resizer" onMouseDown={handleSideDragStart}>
-        <div className="side-resizer-line" />
-      </div>
-      <div className="yaml-side-panel" style={{ width: `${sidePanelRatio * 100}%`, flex: 'none' }}>
-        <TestPanel />
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="app-shell" ref={containerRef}>
-      <div className="app-header">
-        <div className="app-header-left">
-          <div className="app-logo">
-            <div className="app-logo-mark">YB</div>
-            <span className="app-logo-text">YAML Builder</span>
-          </div>
-        </div>
-        <div className="top-tab-bar">
-          <button
-            className={`top-tab${topTab === 'editor' ? ' top-tab--active' : ''}`}
-            onClick={() => setTopTab('editor')}
-          >
-            Editor
-          </button>
-          <button
-            className={`top-tab${topTab === 'test' ? ' top-tab--active' : ''}`}
-            onClick={() => setTopTab('test')}
-          >
-            Test
-          </button>
-        </div>
-        <div className="app-header-right">
-          {/* Spacer to balance the layout */}
-        </div>
-      </div>
-
-      {topTab === 'editor' ? renderEditorView() : renderTestView()}
     </div>
   );
 }

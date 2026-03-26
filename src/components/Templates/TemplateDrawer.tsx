@@ -40,49 +40,52 @@ export default function TemplateDrawer({ open, onToggle }: Props) {
 
   return (
     <>
-      {open ? (
-        <div className="template-drawer-panel">
-          <div className="template-drawer-header">
-            <div className="template-drawer-header-left">
-              <ExIcon icon="template" size={IconSize.S} />
-              <div>
-                <div className="template-drawer-title">Select a Template</div>
-                <div className="template-drawer-subtitle">Start with a pre-configured setup to save time</div>
+      <div>
+        {open && (
+          <div className="template-drawer-panel">
+            <div className="template-drawer-header">
+              <div className="template-drawer-header-left">
+                <ExIcon icon="template" size={IconSize.S} />
+                <div>
+                  <div className="template-drawer-title">Select a Template</div>
+                  <div className="template-drawer-subtitle">Start with a pre-configured setup to save time</div>
+                </div>
               </div>
+              <button className="template-drawer-close" onClick={onToggle} aria-label="Close templates">
+                <ExIcon icon="close" size={IconSize.S} />
+              </button>
             </div>
-            <button className="template-drawer-close" onClick={onToggle} aria-label="Close templates">
-              <ExIcon icon="close" size={IconSize.S} />
-            </button>
+            <div className="template-grid">
+              {templates.map(template => (
+                <div
+                  key={template.id}
+                  className="template-tile"
+                  onClick={() => setConfirmTemplateId(template.id)}
+                >
+                  <div className="template-tile-name">{template.name}</div>
+                  <div className="template-tile-desc">{template.description}</div>
+                  {template.tags && template.tags.length > 0 && (
+                    <div className="template-tile-tags">
+                      {template.tags.map(tag => (
+                        <span key={tag} className="template-tag" style={getTagStyle(tag)}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="template-grid">
-            {templates.map(template => (
-              <div
-                key={template.id}
-                className="template-tile"
-                onClick={() => setConfirmTemplateId(template.id)}
-              >
-                <div className="template-tile-name">{template.name}</div>
-                <div className="template-tile-desc">{template.description}</div>
-                {template.tags && template.tags.length > 0 && (
-                  <div className="template-tile-tags">
-                    {template.tags.map(tag => (
-                      <span key={tag} className="template-tag" style={getTagStyle(tag)}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
+        )}
         <div className="template-drawer-trigger" onClick={onToggle}>
-          <ExIcon icon="template" size={IconSize.XS} />
-          <span className="template-drawer-trigger-text">Quick start: Select a template</span>
-          <ExIcon icon="chevron-up" size={IconSize.XS} style={{ marginLeft: 'auto' }} />
+          <ExIcon icon="document" size={IconSize.XS} />
+          <span className="template-drawer-trigger-text">
+            {open ? 'Hide templates' : 'Quick start: Select a template'}
+          </span>
+          <ExIcon icon={open ? 'direction-caret-down' : 'direction-caret-up'} size={IconSize.XS} style={{ marginLeft: 'auto' }} />
         </div>
-      )}
+      </div>
 
       {confirmTemplateId && (
         <ExDialog

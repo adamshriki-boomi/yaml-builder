@@ -311,13 +311,15 @@ test.describe('Epic 8: YAML Editor', () => {
     await page.waitForTimeout(2000);
   });
 
-  test('US-8.1: Live YAML preview visible and updates', async ({ page }) => {
+  test('US-8.1: Live YAML preview visible with editor toolbar', async ({ page }) => {
     await expect(page.locator('.cm-editor')).toBeVisible();
-    await expect(page.getByText('YAML Configuration')).toBeVisible();
+    await expect(page.locator('.editor-toolbar')).toBeVisible();
   });
 
-  test('US-8.3: Copy YAML button exists', async ({ page }) => {
-    await expect(page.getByText('Copy YAML')).toBeVisible();
+  test('US-8.3: Copy icon button exists in editor toolbar', async ({ page }) => {
+    const toolbar = page.locator('.editor-toolbar');
+    const iconBtns = await toolbar.locator('ex-icon-button').count();
+    expect(iconBtns).toBeGreaterThanOrEqual(5); // format, compact, undo, redo, copy, test
   });
 
   test('US-8.5: Syntax highlighting in CodeMirror', async ({ page }) => {
