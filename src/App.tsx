@@ -107,7 +107,7 @@ function AppContent() {
   }
 
   const rightPanel = isTestMode
-    ? <TestPanel />
+    ? <TestPanel onBackToEditor={() => setIsTestMode(false)} />
     : <YamlEditor onTestToggle={() => setIsTestMode(!isTestMode)} isTestMode={isTestMode} />;
 
   if (isWide) {
@@ -154,7 +154,7 @@ function AppContent() {
               <div className="yaml-bottom-handle-bar" />
             </div>
             {isTestMode
-              ? <TestPanel />
+              ? <TestPanel onBackToEditor={() => setIsTestMode(false)} />
               : <YamlEditor onTestToggle={() => setIsTestMode(!isTestMode)} isTestMode={isTestMode} />
             }
           </div>
