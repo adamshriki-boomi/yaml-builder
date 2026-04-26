@@ -547,6 +547,16 @@ interface Props {
 export default function UserStoriesPage({ onBack }: Props) {
   const totalStories = epics.reduce((sum, epic) => sum + epic.stories.length, 0);
 
+  const epicAccentToken = (color: BadgeColor): string => {
+    switch (color) {
+      case BadgeColor.BLUE: return 'var(--exo-color-border-tertiary)';
+      case BadgeColor.GREEN: return 'var(--exo-color-background-success-strong)';
+      case BadgeColor.RED: return 'var(--exo-color-border-danger-strong)';
+      case BadgeColor.YELLOW: return 'var(--exo-color-background-warning-strong)';
+      default: return 'var(--exo-color-border)';
+    }
+  };
+
   return (
     <div className="app-shell">
       <div className="app-header">
@@ -554,75 +564,54 @@ export default function UserStoriesPage({ onBack }: Props) {
           <ExButton type={ButtonType.TERTIARY} flavor={ButtonFlavor.BASE} onClick={onBack}>
             Back to Builder
           </ExButton>
-          <span style={{ fontWeight: 600, fontSize: '16px' }}>User Stories</span>
+          <span className="user-stories-title">User Stories</span>
           <ExBadge color={BadgeColor.BLUE} shape={BadgeShape.ROUND}>
             {totalStories} stories
           </ExBadge>
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <p style={{
-            fontSize: '14px',
-            color: 'var(--exo-color-font-secondary, #666)',
-            marginBottom: '24px',
-            lineHeight: 1.6,
-          }}>
+      <div className="user-stories-page">
+        <div className="user-stories-container">
+          <p className="user-stories-intro">
             These user stories define the complete feature set of the Boomi Data Integration YAML Builder.
             Each story is organized by epic and includes acceptance criteria for verification.
           </p>
 
           {epics.map(epic => (
-            <div key={epic.id} style={{ marginBottom: '32px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '16px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid var(--exo-color-border, #e0e0e0)',
-              }}>
+            <div key={epic.id} className="user-stories-epic">
+              <div className="user-stories-epic-header">
                 <ExBadge color={epic.color} shape={BadgeShape.ROUND}>
                   Epic {epic.id}
                 </ExBadge>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '15px' }}>{epic.name}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--exo-color-font-secondary, #666)' }}>
+                  <div className="user-stories-epic-name">{epic.name}</div>
+                  <div className="user-stories-epic-desc">
                     {epic.description}
                   </div>
                 </div>
               </div>
 
               {epic.stories.map(story => (
-                <div key={story.id} style={{
-                  padding: '16px',
-                  marginBottom: '12px',
-                  border: '1px solid var(--exo-color-border, #e0e0e0)',
-                  borderRadius: '6px',
-                  borderLeft: `3px solid`,
-                  borderLeftColor: `var(--exo-color-${epic.color === BadgeColor.BLUE ? 'primary' : epic.color === BadgeColor.GREEN ? 'success' : epic.color === BadgeColor.RED ? 'error' : epic.color === BadgeColor.YELLOW ? 'warning' : 'border'}, #0066cc)`,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px' }}>
+                <div
+                  key={story.id}
+                  className="user-stories-story"
+                  style={{ borderLeftColor: epicAccentToken(epic.color) }}
+                >
+                  <div className="user-stories-story-head">
                     <ExBadge color={BadgeColor.GRAY} shape={BadgeShape.SQUARED} size={BadgeSize.SMALL}>
                       {story.id}
                     </ExBadge>
-                    <div style={{ fontSize: '14px', lineHeight: 1.5, flex: 1 }}>
+                    <div className="user-stories-story-text">
                       {story.story}
                     </div>
                   </div>
 
-                  <div style={{ marginLeft: '52px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--exo-color-font-secondary, #666)', marginBottom: '6px' }}>
+                  <div className="user-stories-criteria">
+                    <div className="user-stories-criteria-label">
                       Acceptance Criteria:
                     </div>
-                    <ul style={{
-                      fontSize: '13px',
-                      color: 'var(--exo-color-font-secondary, #666)',
-                      paddingLeft: '16px',
-                      lineHeight: 1.6,
-                      margin: 0,
-                    }}>
+                    <ul className="user-stories-criteria-list">
                       {story.acceptance.map((criteria, idx) => (
                         <li key={idx}>{criteria}</li>
                       ))}

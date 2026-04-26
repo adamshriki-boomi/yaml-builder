@@ -61,7 +61,7 @@ export default function RestStepForm({ step, onChange }: Props) {
         />
       </div>
       <div className="form-row">
-        <div style={{ flex: '0 0 130px' }}>
+        <div className="form-method-cell">
           <ExSelect
             label="Method"
             selected={step.method}
@@ -87,8 +87,8 @@ export default function RestStepForm({ step, onChange }: Props) {
       </div>
 
       {/* Query Parameters */}
-      <div className="form-section" style={{ marginTop: '16px' }}>
-        <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+      <div className="form-section">
+        <div className="form-section-title form-section-title--inline">
           Query Parameters
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addQueryParam}>Add</ExButton>
         </div>
@@ -113,7 +113,7 @@ export default function RestStepForm({ step, onChange }: Props) {
 
       {/* Headers */}
       <div className="form-section">
-        <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+        <div className="form-section-title form-section-title--inline">
           Headers
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addHeader}>Add</ExButton>
         </div>

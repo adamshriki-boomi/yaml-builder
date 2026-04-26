@@ -3,37 +3,38 @@ import { test, expect } from '@playwright/test';
 test.describe('Left panel scroll - all tabs', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 700 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
   });
 
   test('Workflow Steps: add 3 REST steps and verify all content is scrollable', async ({ page }) => {
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
-    // Add 3 REST steps
+    // Steps live inside reports — add a report first
+    await page.getByText('Add First Report').click();
+    await page.waitForTimeout(300);
+
+    // Add 3 REST steps inside the report
     for (let i = 0; i < 3; i++) {
-      await page.getByText('Add REST Step').first().click();
+      await page.getByText('+ Add REST Step').first().click();
       await page.waitForTimeout(300);
     }
 
-    // The "+ Add REST Step" button at the bottom should be scrollable into view
     const addBtn = page.locator('ex-button', { hasText: '+ Add REST Step' }).last();
     await addBtn.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300);
     await expect(addBtn).toBeVisible();
 
-    // Take screenshot showing scrolled state
     await page.screenshot({ path: 'tests/screenshots/scroll-steps-bottom.png', fullPage: false });
 
-    // Scroll back to top — the tab bar and first step should be visible
     await page.locator('.tab-content').evaluate(el => el.scrollTop = 0);
     await page.waitForTimeout(300);
     await page.screenshot({ path: 'tests/screenshots/scroll-steps-top.png', fullPage: false });
   });
 
   test('Interface Parameters: add 5 params and verify scroll works', async ({ page }) => {
-    await page.locator('.tab-bar-item', { hasText: 'Interface Parameters' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Interface Parameters' }).click();
     await page.waitForTimeout(500);
 
     // Add 5 parameters
@@ -60,14 +61,20 @@ test.describe('Left panel scroll - all tabs', () => {
       await page.waitForTimeout(200);
     }
 
-    // Scroll to Variables Metadata section (last accordion)
+    // Add a storage to ensure Variables Storages has a select
+    await page.locator('.tab-content ex-button', { hasText: 'Add Storage' }).click();
+    await page.waitForTimeout(200);
+
+    // Add a metadata entry to ensure Variables Metadata has a format select
+    await page.locator('.tab-content ex-button', { hasText: 'Add Metadata Entry' }).click();
+    await page.waitForTimeout(200);
+
     const tabContent = page.locator('.tab-content');
     await tabContent.evaluate(el => el.scrollTop = el.scrollHeight);
     await page.waitForTimeout(300);
 
     await page.screenshot({ path: 'tests/screenshots/scroll-connector-bottom.png', fullPage: false });
 
-    // Verify the bottom content is visible
     const selects = await page.locator('.tab-content ex-select').count();
     expect(selects).toBeGreaterThanOrEqual(3);
   });

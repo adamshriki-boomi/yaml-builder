@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExButton, ExIcon, ExLoader, ExIconButton, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, LoaderVariant, IconSize } from '@boomi/exosphere';
+import { ExButton, ExLoader, ExIconButton, ExEmptyState, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, LoaderVariant } from '@boomi/exosphere';
 
 interface Props {
   onBackToEditor: () => void;
@@ -18,7 +18,7 @@ export default function TestPanel({ onBackToEditor }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="test-panel">
       <div className="editor-toolbar">
         <ExIconButton
           type={IconButtonType.TERTIARY}
@@ -27,38 +27,36 @@ export default function TestPanel({ onBackToEditor }: Props) {
           label="Back to YAML Editor"
           onClick={onBackToEditor}
         />
-        <span style={{ fontSize: '13px', fontWeight: 600, marginLeft: '4px' }}>Test Blueprint</span>
+        <span className="test-panel-title">Test Blueprint</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '40px', textAlign: 'center' }}>
+      <div className="test-panel-body">
         {testing ? (
-          <>
+          <div className="test-panel-loading">
             <ExLoader variant={LoaderVariant.SPINNER} />
-            <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--exo-color-font-secondary, #666)' }}>
-              Testing your Blueprint...
-            </p>
-          </>
+            <p className="test-panel-loading-text">Testing your Blueprint...</p>
+          </div>
         ) : tested ? (
-          <>
-            <ExIcon icon="status-success" size={IconSize.L} />
-            <p style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', marginTop: '16px' }}>Test Complete</p>
-            <p style={{ fontSize: '13px', color: 'var(--exo-color-font-secondary, #666)', marginBottom: '20px' }}>
-              No issues found. Blueprint configuration is valid.
-            </p>
-            <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={handleTest}>
-              Test Again
-            </ExButton>
-          </>
+          <div className="empty-state-wrap">
+            <ExEmptyState
+              label="Test Complete"
+              text="No issues found. Blueprint configuration is valid."
+            >
+              <ExButton slot="action" type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={handleTest}>
+                Test Again
+              </ExButton>
+            </ExEmptyState>
+          </div>
         ) : (
-          <>
-            <ExIcon icon="play" size={IconSize.L} style={{ color: 'var(--exo-color-font-secondary, #999)' }} />
-            <p style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', marginTop: '16px' }}>Test your Blueprint configuration</p>
-            <p style={{ fontSize: '13px', color: 'var(--exo-color-font-secondary, #666)', marginBottom: '20px', maxWidth: '300px' }}>
-              Run a validation test to check your YAML configuration before deploying.
-            </p>
-            <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={handleTest}>
-              Test Blueprint
-            </ExButton>
-          </>
+          <div className="empty-state-wrap">
+            <ExEmptyState
+              label="Test your Blueprint configuration"
+              text="Run a validation test to check your YAML configuration before deploying."
+            >
+              <ExButton slot="action" type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={handleTest}>
+                Test Blueprint
+              </ExButton>
+            </ExEmptyState>
+          </div>
         )}
       </div>
     </div>

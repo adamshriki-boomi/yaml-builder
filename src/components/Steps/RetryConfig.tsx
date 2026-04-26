@@ -30,7 +30,7 @@ export default function RetryConfig({ step, onChange }: Props) {
 
   return (
     <div className="form-section">
-      <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+      <div className="form-section-title form-section-title--inline">
         Retry Strategy
         {!hasRetry ? (
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={enableRetry}>Enable</ExButton>
@@ -40,7 +40,7 @@ export default function RetryConfig({ step, onChange }: Props) {
       </div>
 
       {hasRetry && step.retry && (
-        <div style={{ paddingLeft: '16px', borderLeft: '2px solid var(--exo-color-border, #e0e0e0)' }}>
+        <div className="form-indent">
           <div className="form-field">
             <ExInput
               label="Status Codes"

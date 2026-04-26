@@ -146,7 +146,7 @@ export default function ConnectorForm() {
 
       <CollapsibleSection label="Default Headers">
         {config.default_headers.length === 0 && (
-          <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+          <p className="form-helper-text">
             No default headers configured. Add headers that will be included in every request.
           </p>
         )}
@@ -173,7 +173,7 @@ export default function ConnectorForm() {
             />
           </div>
         ))}
-        <div style={{ marginTop: '8px' }}>
+        <div className="form-toolbar">
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addHeader}>
             + Add Header
           </ExButton>
@@ -187,7 +187,7 @@ export default function ConnectorForm() {
       <CollapsibleSection label="Default Retry Strategy">
         {!config.default_retry_strategy ? (
           <div>
-            <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+            <p className="form-helper-text">
               No default retry strategy. Add one to apply retries across all steps.
             </p>
             <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={enableDefaultRetry}>
@@ -218,7 +218,7 @@ export default function ConnectorForm() {
                 onInput={(e: any) => updateDefaultRetry('interval', Number(e.target.value))}
               />
             </div>
-            <div style={{ marginTop: '8px' }}>
+            <div className="form-toolbar">
               <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.RISKY} onClick={removeDefaultRetry}>
                 Remove Default Retry
               </ExButton>
@@ -229,7 +229,7 @@ export default function ConnectorForm() {
 
       <CollapsibleSection label="Variables Storages">
         {config.variables_storages.length === 0 && (
-          <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+          <p className="form-helper-text">
             No variable storages configured. Add storage backends for your pipeline variables.
           </p>
         )}
@@ -262,7 +262,7 @@ export default function ConnectorForm() {
             />
           </div>
         ))}
-        <div style={{ marginTop: '8px' }}>
+        <div className="form-toolbar">
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addStorage}>
             + Add Storage
           </ExButton>
@@ -270,17 +270,12 @@ export default function ConnectorForm() {
       </CollapsibleSection>
 
       <CollapsibleSection label="Variables Metadata">
-        <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+        <p className="form-helper-text">
           Map variable names to their format and storage backend.
         </p>
         {Object.entries(config.variables_metadata).map(([key, entry]) => (
-          <div key={key} style={{
-            padding: '12px',
-            marginBottom: '8px',
-            border: '1px solid var(--exo-color-border, #e0e0e0)',
-            borderRadius: '6px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <div key={key} className="sub-card">
+            <div className="sub-card-header sub-card-header--end">
               <ExIconButton
                 type={IconButtonType.SECONDARY}
                 flavor={IconButtonFlavor.RISKY}
@@ -317,7 +312,7 @@ export default function ConnectorForm() {
             </div>
           </div>
         ))}
-        <div style={{ marginTop: '8px' }}>
+        <div className="form-toolbar">
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addMetadataEntry}>
             + Add Metadata Entry
           </ExButton>

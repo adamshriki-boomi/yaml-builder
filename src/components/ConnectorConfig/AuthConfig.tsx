@@ -61,7 +61,7 @@ export default function AuthConfigSection() {
       </div>
 
       {config.auth.type === 'oauth2' && config.auth.oauth && (
-        <div style={{ paddingLeft: '16px', borderLeft: '2px solid var(--exo-color-border, #e0e0e0)' }}>
+        <div className="form-indent">
           <div className="form-field">
             <ExSelect
               label="Grant Type"
@@ -92,7 +92,7 @@ export default function AuthConfigSection() {
               onInput={(e: any) => updateOAuth('refresh_token', e.target.value)}
             />
           </div>
-          <div className="form-field" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="toggle-row">
             <ExToggle
               on={config.auth.oauth.use_base64}
               onChange={() => updateOAuth('use_base64', !config.auth.oauth!.use_base64)}

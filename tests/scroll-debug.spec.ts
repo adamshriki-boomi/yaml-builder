@@ -2,16 +2,20 @@ import { test, expect } from '@playwright/test';
 
 test('debug scroll: add 2 REST steps and measure heights', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 700 });
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
 
-  await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+  await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
   await page.waitForTimeout(500);
 
-  // Add 2 REST steps
-  await page.getByText('Add REST Step').first().click();
+  // Steps live inside reports — add a report first
+  await page.getByText('Add First Report').click();
   await page.waitForTimeout(300);
-  await page.getByText('+ Add REST Step').click();
+
+  // Add 2 REST steps inside the report
+  await page.getByText('+ Add REST Step').first().click();
+  await page.waitForTimeout(300);
+  await page.getByText('+ Add REST Step').first().click();
   await page.waitForTimeout(300);
 
   // Measure all the container heights

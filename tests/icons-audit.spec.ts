@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('audit all icons - Connector Config tab', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
 
   // Add a header to show delete icon
@@ -32,13 +32,17 @@ test('audit all icons - Connector Config tab', async ({ page }) => {
 
 test('audit all icons - Steps tab with REST step', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
 
-  await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+  await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
   await page.waitForTimeout(300);
 
-  await page.getByText('Add REST Step').first().click();
+  // Steps live inside reports — add a report first
+  await page.getByText('Add First Report').click();
+  await page.waitForTimeout(300);
+
+  await page.getByText('+ Add REST Step').first().click();
   await page.waitForTimeout(500);
 
   await page.screenshot({ path: 'tests/screenshots/icons-tab3-steps.png', fullPage: false });
@@ -64,10 +68,10 @@ test('audit all icons - Steps tab with REST step', async ({ page }) => {
 
 test('audit all icons - Parameters tab', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
 
-  await page.locator('.tab-bar-item', { hasText: 'Interface Parameters' }).click();
+  await page.locator('ex-tab-item', { hasText: 'Interface Parameters' }).click();
   await page.waitForTimeout(300);
 
   await page.locator('.tab-content ex-button').first().click();
@@ -91,15 +95,3 @@ test('audit all icons - Parameters tab', async ({ page }) => {
   console.log('Icon buttons in params tab:', JSON.stringify(iconButtons, null, 2));
 });
 
-test('audit theme toggle icon', async ({ page }) => {
-  await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(2000);
-
-  const themeToggle = page.locator('.theme-toggle');
-  const hasSvg = await themeToggle.locator('svg').count();
-  console.log('Theme toggle has SVG:', hasSvg);
-
-  const bbox = await themeToggle.boundingBox();
-  console.log('Theme toggle bounding box:', bbox);
-});

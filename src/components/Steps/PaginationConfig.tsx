@@ -60,7 +60,7 @@ export default function PaginationConfig({ step, onChange }: Props) {
 
   return (
     <div className="form-section">
-      <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+      <div className="form-section-title form-section-title--inline">
         Pagination
         {!hasPagination ? (
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={enablePagination}>Enable</ExButton>
@@ -70,7 +70,7 @@ export default function PaginationConfig({ step, onChange }: Props) {
       </div>
 
       {hasPagination && step.pagination && (
-        <div style={{ paddingLeft: '16px', borderLeft: '2px solid var(--exo-color-border, #e0e0e0)' }}>
+        <div className="form-indent">
           <div className="form-row">
             <ExSelect
               label="Pagination Type"
@@ -143,9 +143,9 @@ export default function PaginationConfig({ step, onChange }: Props) {
           )}
 
           {/* Break Conditions */}
-          <div style={{ marginTop: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600 }}>Break Conditions</span>
+          <div className="form-section">
+            <div className="form-section-title form-section-title--inline">
+              <span>Break Conditions</span>
               <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addBreakCondition}>Add</ExButton>
             </div>
             {step.pagination.break_conditions.map(cond => (

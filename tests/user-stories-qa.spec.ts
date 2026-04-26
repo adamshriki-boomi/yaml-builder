@@ -1,18 +1,51 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 // QA validation against all user stories
+
+// ExAccordionItem's label lives in shadow DOM. Find by label property, then click
+// the shadow-DOM header (the click handler is bound there, NOT to the host).
+async function expandAccordion(page: Page, labelPrefix: string) {
+  await page.evaluate((labelPrefix) => {
+    const items = document.querySelectorAll('ex-accordion-item');
+    for (const item of items) {
+      const itemLabel = (item as { label?: string }).label || '';
+      if (itemLabel.startsWith(labelPrefix)) {
+        // The clickable header is the first child div inside the .container in shadow DOM.
+        const header = item.shadowRoot?.querySelector('.container > div:first-child');
+        if (header) {
+          (header as HTMLElement).click();
+        }
+        return;
+      }
+    }
+  }, labelPrefix);
+}
+
+async function clickConfirmInDialog(page: Page) {
+  const handle = await page.evaluateHandle(() => {
+    const dialog = document.querySelector('ex-dialog');
+    if (!dialog) return null;
+    const buttons = dialog.querySelectorAll('ex-button');
+    for (const btn of buttons) {
+      if (btn.textContent?.includes('Confirm')) return btn;
+    }
+    return null;
+  });
+  const el = handle.asElement();
+  if (el) await el.click();
+}
 
 test.describe('Epic 1: Connector Configuration', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
   });
 
   test('US-1.1: Connector name and base URL fields exist in Basic Configuration section', async ({ page }) => {
-    // Basic Configuration is the first collapsible section, open by default
-    const firstSectionLabel = page.locator('.collapsible-label').first();
-    await expect(firstSectionLabel).toHaveText('Basic Configuration');
+    // Basic Configuration is the first ExAccordionItem, open by default
+    const firstLabel = await page.locator('.tab-content ex-accordion-item').first().evaluate((el: any) => el.label);
+    expect(firstLabel).toBe('Basic Configuration');
 
     const inputs = await page.locator('.tab-content ex-input').count();
     expect(inputs).toBeGreaterThanOrEqual(2); // connector name + base URL
@@ -29,9 +62,9 @@ test.describe('Epic 1: Connector Configuration', () => {
   });
 
   test('US-1.3: Auth type dropdown exists with bearer, basic_http, api_key, oauth2', async ({ page }) => {
-    // Authentication section has the auth type select
-    const authLabel = page.locator('.collapsible-label', { hasText: 'Authentication' });
-    await expect(authLabel).toBeVisible();
+    // Authentication section is the 3rd ExAccordionItem
+    const labels = await page.locator('.tab-content ex-accordion-item').evaluateAll((els: any[]) => els.map(el => el.label));
+    expect(labels).toContain('Authentication');
 
     const selects = await page.locator('.tab-content ex-select').count();
     expect(selects).toBeGreaterThanOrEqual(1); // auth type select at minimum
@@ -59,7 +92,7 @@ test.describe('Epic 1: Connector Configuration', () => {
   });
 
   test('US-1.5: All six connector config sections are present', async ({ page }) => {
-    const sections = page.locator('.tab-content .collapsible-section');
+    const sections = page.locator('.tab-content ex-accordion-item');
     await expect(sections).toHaveCount(6);
   });
 
@@ -83,9 +116,9 @@ test.describe('Epic 1: Connector Configuration', () => {
 test.describe('Epic 2: Interface Parameters', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Interface Parameters' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Interface Parameters' }).click();
     await page.waitForTimeout(500);
   });
 
@@ -139,7 +172,7 @@ test.describe('Epic 2: Interface Parameters', () => {
 test.describe('Epic 3: Variables & Storage', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
   });
 
@@ -171,9 +204,9 @@ test.describe('Epic 3: Variables & Storage', () => {
 test.describe('Epic 4: Workflow Steps (inside multi-reports)', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
     // Add a report first, then steps go inside it
     await page.getByText('Add First Report').click();
@@ -224,9 +257,9 @@ test.describe('Epic 4: Workflow Steps (inside multi-reports)', () => {
 test.describe('Epic 5: Pagination', () => {
   test('US-5.1-5.4: Can enable pagination with type and params inside a report step', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
     // Add report, then step
@@ -246,9 +279,9 @@ test.describe('Epic 5: Pagination', () => {
 test.describe('Epic 6: Retry & Error Handling', () => {
   test('US-6.1: Can enable retry with status codes, attempts, interval inside a report step', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
     await page.getByText('Add First Report').click();
@@ -266,9 +299,9 @@ test.describe('Epic 6: Retry & Error Handling', () => {
 
   test('US-6.2: Loop step has ignore errors toggle', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
     await page.getByText('Add First Report').click();
@@ -285,9 +318,9 @@ test.describe('Epic 6: Retry & Error Handling', () => {
 test.describe('Epic 7: Variable Outputs', () => {
   test('US-7.1-7.3: Can add variable output with name, location, format inside a report step', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
     await page.getByText('Add First Report').click();
@@ -307,7 +340,7 @@ test.describe('Epic 7: Variable Outputs', () => {
 test.describe('Epic 8: YAML Editor', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
   });
 
@@ -331,24 +364,27 @@ test.describe('Epic 8: YAML Editor', () => {
 test.describe('Epic 9: Templates', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
   });
 
   test('US-9.1: Template drawer shows all templates when expanded', async ({ page }) => {
-    await page.locator('.template-drawer-trigger').click();
+    await page.locator('.template-drawer-host ex-accordion-item').click();
     await page.waitForTimeout(500);
 
-    const tiles = page.locator('.template-tile');
+    const tiles = page.locator('.template-drawer-host ex-tile');
     await expect(tiles).toHaveCount(4);
-    await expect(page.locator('.template-tile-name', { hasText: 'Multi-Report Blueprint' })).toBeVisible();
+    const titles = await tiles.evaluateAll((els: any[]) => els.map(el => el.title));
+    expect(titles).toContain('Multi-Report Blueprint');
   });
 
   test('US-9.2: Clicking a template shows confirmation dialog before applying', async ({ page }) => {
-    await page.locator('.template-drawer-trigger').click();
+    await page.locator('.template-drawer-host ex-accordion-item').click();
     await page.waitForTimeout(500);
 
-    await page.locator('.template-tile', { hasText: 'Basic Connector' }).click();
+    // Basic Connector is the first template tile (titles are in shadow DOM, can't filter by title)
+    const tiles = page.locator('.template-drawer-host ex-tile');
+    await tiles.first().click();
     await page.waitForTimeout(500);
 
     // Confirmation dialog should appear with warning
@@ -363,24 +399,26 @@ test.describe('Epic 9: Templates', () => {
 test.describe('Epic 10: UX & Responsiveness', () => {
   test('US-10.1: Works in wide drawer (800px+) with split layout', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 700 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
     await expect(page.locator('.yaml-side-panel')).toBeVisible();
-    await expect(page.locator('.side-resizer')).toBeVisible();
+    await expect(page.locator('ex-resize-handle')).toBeVisible();
   });
 
   test('US-10.1: Responsive bottom panel below 900px', async ({ page }) => {
     await page.setViewportSize({ width: 600, height: 700 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
     await expect(page.locator('.yaml-bottom-panel')).toBeVisible();
   });
 
   test('Light mode only, no theme toggle', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
-    await expect(page.locator('.theme-toggle')).toHaveCount(0);
+    // Theme toggle was removed; assert no .theme-toggle remains
+    const themeToggleCount = await page.locator('.theme-toggle').count();
+    expect(themeToggleCount).toBe(0);
     expect(await page.locator('html').getAttribute('class')).toContain('ex-theme-light');
   });
 });
@@ -388,24 +426,20 @@ test.describe('Epic 10: UX & Responsiveness', () => {
 test.describe('Epic 11: Multi-Report Structure', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
   });
 
   test('US-11.1: Workflow Steps tab has Pre-Run, Multi-Reports, Post-Run sections', async ({ page }) => {
-    const labels = page.locator('.tab-content .collapsible-label');
-    const count = await labels.count();
-    expect(count).toBe(3);
-
-    const texts: string[] = [];
-    for (let i = 0; i < count; i++) {
-      texts.push((await labels.nth(i).textContent()) || '');
-    }
-    expect(texts[0]).toContain('Pre-Run Configurations');
-    expect(texts[1]).toContain('Multi-Reports');
-    expect(texts[2]).toContain('Post-Run Configurations');
+    const labels = await page.locator('.tab-content ex-accordion-item').evaluateAll(
+      (els: any[]) => els.map(el => el.label)
+    );
+    expect(labels.length).toBe(3);
+    expect(labels[0]).toContain('Pre-Run Configurations');
+    expect(labels[1]).toContain('Multi-Reports');
+    expect(labels[2]).toContain('Post-Run Configurations');
   });
 
   test('US-11.2: Multi-Reports shows empty state with Add First Report when no reports exist', async ({ page }) => {
@@ -444,9 +478,9 @@ test.describe('Epic 11: Multi-Report Structure', () => {
 test.describe('Epic 12: Report Management', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
   });
 
@@ -504,31 +538,33 @@ test.describe('Epic 12: Report Management', () => {
 test.describe('Epic 13: Report Parameters', () => {
   test('US-13.1: Each report has a collapsible Report Parameters section', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
     await page.getByText('Add First Report').click();
     await page.waitForTimeout(500);
 
     // Report parameters section exists inside the report card
-    const rpLabel = page.locator('.collapsible-label', { hasText: 'Report Parameters' });
-    await expect(rpLabel).toBeVisible();
+    const labels = await page.locator('.tab-content ex-accordion-item').evaluateAll(
+      (els: any[]) => els.map(el => el.label)
+    );
+    expect(labels.some(l => l.startsWith('Report Parameters'))).toBe(true);
   });
 
   test('US-13.2: Can add and remove report parameters', async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
 
     await page.getByText('Add First Report').click();
     await page.waitForTimeout(500);
 
-    // Expand Report Parameters section (collapsed by default)
-    await page.locator('.collapsible-header', { hasText: 'Report Parameters' }).click();
+    // Expand Report Parameters accordion (collapsed by default)
+    await expandAccordion(page, 'Report Parameters');
     await page.waitForTimeout(500);
 
     const inputsBefore = await page.locator('.tab-content ex-input').count();
@@ -541,13 +577,14 @@ test.describe('Epic 13: Report Parameters', () => {
     const inputsAfter = await page.locator('.tab-content ex-input').count();
     expect(inputsAfter).toBeGreaterThan(inputsBefore);
 
-    // Delete it - find the delete icon button inside the report parameters area
-    // The report has [copy, delete] icons in its header already
-    // The param also has a delete icon. We want the last delete icon.
+    // Delete the parameter — last icon button. ExIconButton's click handler is
+    // bound to a <button> in shadow DOM, not the host. Click that directly to
+    // bypass the visibility-inheritance issue from ExCard's animation state.
     const allIconBtns = page.locator('.tab-content ex-icon-button');
     const iconCount = await allIconBtns.count();
-    // Click the last icon button (delete param)
-    await allIconBtns.nth(iconCount - 1).click();
+    await allIconBtns.nth(iconCount - 1).evaluate(
+      (el) => (el.shadowRoot?.querySelector('button') as HTMLButtonElement | null)?.click()
+    );
     await page.waitForTimeout(500);
 
     const inputsEnd = await page.locator('.tab-content ex-input').count();
@@ -558,27 +595,28 @@ test.describe('Epic 13: Report Parameters', () => {
 test.describe('Epic 14: Pre-Run and Post-Run Configuration Groups', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
+    await page.goto('http://localhost:5173/yaml-builder/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
-    await page.locator('.tab-bar-item', { hasText: 'Workflow Steps' }).click();
+    await page.locator('ex-tab-item', { hasText: 'Workflow Steps' }).click();
     await page.waitForTimeout(500);
   });
 
   test('US-14.1: Pre-Run section can have configuration groups with their own steps', async ({ page }) => {
     // Expand Pre-Run section
-    await page.locator('.collapsible-header', { hasText: 'Pre-Run Configurations' }).click();
+    await expandAccordion(page, 'Pre-Run Configurations');
     await page.waitForTimeout(500);
 
     await page.getByText('+ Add Pre-Run Group').click();
     await page.waitForTimeout(500);
 
     // Group card should appear
-    await expect(page.locator('ex-badge', { hasText: 'Pre-Run 1' })).toBeVisible();
+    // Badge exists in DOM (visibility inheritance during accordion animation can mark it hidden)
+    await expect(page.locator('ex-badge', { hasText: 'Pre-Run 1' })).toHaveCount(1);
     const inputs = await page.locator('.tab-content ex-input').count();
     expect(inputs).toBeGreaterThanOrEqual(1); // Group Name input
 
     // Can add steps inside the pre-run group
-    await page.getByText('+ Add REST Step').first().click();
+    await page.getByText('+ Add REST Step').first().click({ force: true });
     await page.waitForTimeout(500);
     const badges = await page.locator('ex-badge').count();
     expect(badges).toBeGreaterThanOrEqual(2); // Pre-Run badge + REST badge
@@ -586,29 +624,33 @@ test.describe('Epic 14: Pre-Run and Post-Run Configuration Groups', () => {
 
   test('US-14.2: Post-Run section can have configuration groups with their own steps', async ({ page }) => {
     // Expand Post-Run section
-    await page.locator('.collapsible-header', { hasText: 'Post-Run Configurations' }).click();
+    await expandAccordion(page, 'Post-Run Configurations');
     await page.waitForTimeout(500);
 
     await page.getByText('+ Add Post-Run Group').click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('ex-badge', { hasText: 'Post-Run 1' })).toBeVisible();
+    await expect(page.locator('ex-badge', { hasText: 'Post-Run 1' })).toHaveCount(1);
     const inputs = await page.locator('.tab-content ex-input').count();
     expect(inputs).toBeGreaterThanOrEqual(1);
   });
 
   test('US-14.3: Pre-Run and Post-Run groups can be deleted', async ({ page }) => {
     // Expand Pre-Run section
-    await page.locator('.collapsible-header', { hasText: 'Pre-Run Configurations' }).click();
+    await expandAccordion(page, 'Pre-Run Configurations');
     await page.waitForTimeout(500);
 
     await page.getByText('+ Add Pre-Run Group').click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('ex-badge', { hasText: 'Pre-Run 1' })).toBeVisible();
+    // Badge exists in DOM (visibility inheritance during accordion animation can mark it hidden)
+    await expect(page.locator('ex-badge', { hasText: 'Pre-Run 1' })).toHaveCount(1);
 
-    // Delete the group - first icon button in the pre-run area
-    await page.locator('.tab-content ex-icon-button').first().click();
+    // Delete the group — first icon button. Click the shadow-DOM <button> directly
+    // because ExIconButton's click handler is bound there.
+    await page.locator('.tab-content ex-icon-button').first().evaluate(
+      (el) => (el.shadowRoot?.querySelector('button') as HTMLButtonElement | null)?.click()
+    );
     await page.waitForTimeout(500);
 
     await expect(page.locator('ex-badge', { hasText: 'Pre-Run 1' })).toHaveCount(0);

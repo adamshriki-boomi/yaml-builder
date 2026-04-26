@@ -1,4 +1,4 @@
-import { ExButton, ExInput, ExSelect, ExToggle, ExLabel, ExIconButton, ExMenuItem, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
+import { ExButton, ExInput, ExSelect, ExToggle, ExLabel, ExIconButton, ExMenuItem, ExEmptyState, ExCard, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
 import CollapsibleSection from '../Layout/CollapsibleSection';
 import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
 import type { InterfaceParameter, DynamicSource } from '../../types/connector';
@@ -68,32 +68,24 @@ export default function ParameterList() {
     <div>
       <CollapsibleSection label={`Existing Parameters (${config.interface_parameters.length})`}>
           {config.interface_parameters.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px', color: 'var(--exo-color-font, #333)' }}>
-                No parameters defined
-              </div>
-              <div style={{ fontSize: '13px', color: 'var(--exo-color-font-secondary, #666)', marginBottom: '20px', maxWidth: '360px', margin: '0 auto 20px', lineHeight: 1.5 }}>
-                Define input parameters that users of your connector will need to provide,
-                such as API keys, date ranges, or configuration values.
-              </div>
-              <ExButton type={ButtonType.PRIMARY} flavor={ButtonFlavor.BRANDED} onClick={addParameter}>
-                Add First Parameter
-              </ExButton>
+            <div className="empty-state-wrap">
+              <ExEmptyState
+                label="No parameters defined"
+                text="Define input parameters that users of your connector will need to provide, such as API keys, date ranges, or configuration values."
+              >
+                <ExButton slot="action" type={ButtonType.PRIMARY} flavor={ButtonFlavor.BRANDED} onClick={addParameter}>
+                  Add First Parameter
+                </ExButton>
+              </ExEmptyState>
             </div>
           ) : (
             config.interface_parameters.map((param, index) => (
-              <div key={param.id} style={{
-                background: 'var(--exo-color-background-secondary, #f5f5f5)',
-                border: '1px solid var(--exo-color-border-secondary, #e5e5e5)',
-                borderRadius: '8px',
-                padding: '16px',
-                marginBottom: '12px',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--exo-color-font-secondary, #666)' }}>
+              <ExCard key={param.id} className="app-list-card">
+                <div slot="header" className="card-row card-row--between">
+                  <span className="card-meta">
                     Parameter {index + 1}
                   </span>
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="card-actions">
                     <ExIconButton
                       type={IconButtonType.SECONDARY}
                       flavor={IconButtonFlavor.BASE}
@@ -192,8 +184,8 @@ export default function ParameterList() {
 
                 {/* Multiselect with dynamic source */}
                 {param.type === 'multiselect' && (
-                  <div style={{ paddingLeft: '16px', borderLeft: '2px solid var(--exo-color-border, #e0e0e0)', marginTop: '8px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>Dynamic Source</div>
+                  <div className="form-indent form-indent--top">
+                    <div className="form-section-title form-section-title--inline">Dynamic Source</div>
                     <div className="form-row">
                       <ExInput
                         label="Source Type"
@@ -222,7 +214,7 @@ export default function ParameterList() {
                         <ExMenuItem value="change">Change</ExMenuItem>
                         <ExMenuItem value="manual">Manual</ExMenuItem>
                       </ExSelect>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '20px' }}>
+                      <div className="toggle-row toggle-row--padded">
                         <ExToggle
                           on={param.dynamic_source?.allow_manual_refresh ?? true}
                           onChange={() => updateDynamicSource(param.id, 'allow_manual_refresh', !(param.dynamic_source?.allow_manual_refresh ?? true))}
@@ -234,26 +226,26 @@ export default function ParameterList() {
                 )}
 
                 {/* Required toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <div className="toggle-row">
                   <ExToggle
                     on={param.required || false}
                     onChange={() => updateParam(param.id, 'required', !param.required)}
                   />
                   <ExLabel>Required</ExLabel>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <div className="toggle-row">
                   <ExToggle
                     on={param.is_sensitive || false}
                     onChange={() => updateParam(param.id, 'is_sensitive', !param.is_sensitive)}
                   />
                   <ExLabel>Sensitive / Encrypted</ExLabel>
                 </div>
-              </div>
+              </ExCard>
             ))
           )}
       </CollapsibleSection>
 
-      <div style={{ marginTop: '16px' }}>
+      <div className="form-section">
         <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addParameter}>
           + Add Parameter
         </ExButton>

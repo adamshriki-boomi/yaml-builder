@@ -40,9 +40,9 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
         EditorView.theme({
           '&': { height: '100%' },
           '.cm-scroller': { overflow: 'auto' },
-          '.cm-content': { fontFamily: 'monospace', fontSize: '13px' },
+          '.cm-content': { fontFamily: 'monospace', fontSize: 'var(--exo-font-size-x-small)' },
           '.cm-gutters': {
-            background: 'var(--exo-color-background-secondary, #f5f5f5)',
+            background: 'var(--exo-color-background-secondary)',
             border: 'none',
           },
         }),
@@ -136,7 +136,7 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
   }, [handleEditorChange]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="yaml-editor-shell">
       <div className="editor-toolbar">
         <div className="editor-toolbar-group">
           <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="sliders" label="Format YAML" onClick={handleFormat} />
@@ -163,7 +163,7 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
       </div>
 
       {copyFeedback && (
-        <div style={{ padding: '4px 16px' }}>
+        <div className="yaml-editor-banner">
           <ExAlertBanner type={AlertBannerType.SUCCESS} variant={AlertBannerVariant.INLINE}>
             YAML copied to clipboard
           </ExAlertBanner>
@@ -176,14 +176,9 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
         </ExAlertBanner>
       )}
 
-      <div ref={editorRef} style={{ flex: 1, overflow: 'hidden' }} />
+      <div ref={editorRef} className="yaml-editor-content" />
 
-      <div style={{
-        padding: '8px 16px',
-        borderTop: '1px solid var(--exo-color-border, #e0e0e0)',
-        fontSize: '11px',
-        color: 'var(--exo-color-font-secondary, #666)',
-      }}>
+      <div className="yaml-editor-footer">
         Edit YAML directly — changes sync to UI after 1 second
       </div>
     </div>

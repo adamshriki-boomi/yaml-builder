@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+/**
+ * ────────────────────────────────────────────────────────────
+ * Note: this file contains a CUSTOM EXOSPHERE EXTENSION
+ * for the vertical bottom-panel resize handle (`.yaml-bottom-handle`).
+ * Exosphere's ExResizeHandle is horizontal-only. See EXOSPHERE-CUSTOM.md.
+ * ────────────────────────────────────────────────────────────
+ */
+import { useState, useEffect, useRef } from 'react';
+import { ExTab, ExTabItem, ExResizeHandle, ResizerPosition } from '@boomi/exosphere';
 import { ConnectorProvider } from './context/ConnectorContext';
 import ConnectorForm from './components/ConnectorConfig/ConnectorForm';
 import ParameterList from './components/Parameters/ParameterList';
@@ -7,24 +15,26 @@ import YamlEditor from './components/Editor/YamlEditor';
 import TestPanel from './components/Test/TestPanel';
 import TemplateDrawer from './components/Templates/TemplateDrawer';
 
+const YAML_SIDE_PANEL_ID = 'yaml-side-panel';
+const SIDE_PANEL_MIN_WIDTH_PX = 240;
+const SIDE_PANEL_MAX_WIDTH_PX = 1200;
+
 const TABS = ['Connector Configuration', 'Interface Parameters', 'Workflow Steps'];
 
 function TabBar({ activeTab, onSelect }: { activeTab: number; onSelect: (i: number) => void }) {
   return (
-    <div className="tab-bar" role="tablist">
-      {TABS.map((label, i) => (
-        <React.Fragment key={i}>
-          {i > 0 && <span className="tab-bar-divider" />}
-          <button
-            role="tab"
-            aria-selected={activeTab === i}
-            className={`tab-bar-item${activeTab === i ? ' tab-bar-item--active' : ''}`}
+    <div className="tab-bar">
+      <ExTab>
+        {TABS.map((label, i) => (
+          <ExTabItem
+            key={i}
+            selected={activeTab === i}
             onClick={() => onSelect(i)}
           >
             {label}
-          </button>
-        </React.Fragment>
-      ))}
+          </ExTabItem>
+        ))}
+      </ExTab>
     </div>
   );
 }
@@ -41,15 +51,12 @@ function TabContent({ activeTab }: { activeTab: number }) {
 function AppContent() {
   const [activeTab, setActiveTab] = useState(0);
   const [isTestMode, setIsTestMode] = useState(false);
-  const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
   const [isWide, setIsWide] = useState(true);
   const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
-  const [sidePanelRatio, setSidePanelRatio] = useState(0.5);
   const [isBottomPanelOpen] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef<'vertical' | 'horizontal' | null>(null);
+  const isDraggingBottom = useRef(false);
 
-  // Force light theme
   useEffect(() => {
     document.documentElement.classList.remove('ex-theme-dark');
     document.documentElement.classList.add('ex-theme-light');
@@ -68,43 +75,27 @@ function AppContent() {
   }, []);
 
   const handleBottomDragStart = () => {
-    startDrag('vertical', (e) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      setBottomPanelHeight(Math.max(120, Math.min(rect.bottom - e.clientY, 500)));
-    });
-  };
-
-  const handleSideDragStart = () => {
-    startDrag('horizontal', (e) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const ratio = (rect.right - e.clientX) / rect.width;
-      setSidePanelRatio(Math.max(0.2, Math.min(ratio, 0.7)));
-    });
-  };
-
-  function startDrag(axis: 'vertical' | 'horizontal', onMove: (e: MouseEvent) => void) {
-    isDragging.current = axis;
-    document.body.style.cursor = axis === 'vertical' ? 'ns-resize' : 'col-resize';
+    isDraggingBottom.current = true;
+    document.body.style.cursor = 'ns-resize';
     document.body.style.userSelect = 'none';
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      onMove(e);
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDraggingBottom.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setBottomPanelHeight(Math.max(120, Math.min(rect.bottom - e.clientY, 500)));
     };
 
-    const handleMouseUp = () => {
-      isDragging.current = null;
+    const onMouseUp = () => {
+      isDraggingBottom.current = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
 
   const rightPanel = isTestMode
     ? <TestPanel onBackToEditor={() => setIsTestMode(false)} />
@@ -113,21 +104,25 @@ function AppContent() {
   if (isWide) {
     return (
       <div className="app-shell" ref={containerRef}>
-        <div className="app-body" style={{ flexDirection: 'row' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <div className="app-body app-body--row">
+          <div className="app-form-column">
             <TabBar activeTab={activeTab} onSelect={setActiveTab} />
             <div className="tab-content">
               <TabContent activeTab={activeTab} />
             </div>
-            <TemplateDrawer
-              open={showTemplateDrawer}
-              onToggle={() => setShowTemplateDrawer(!showTemplateDrawer)}
-            />
+            <TemplateDrawer />
           </div>
-          <div className="side-resizer" onMouseDown={handleSideDragStart}>
-            <div className="side-resizer-line" />
-          </div>
-          <div className="yaml-side-panel" style={{ width: `${sidePanelRatio * 100}%`, flex: 'none' }}>
+          <ExResizeHandle
+            targetId={YAML_SIDE_PANEL_ID}
+            position={ResizerPosition.LEFT}
+            minWidth={SIDE_PANEL_MIN_WIDTH_PX}
+            maxWidth={SIDE_PANEL_MAX_WIDTH_PX}
+          />
+          <div
+            id={YAML_SIDE_PANEL_ID}
+            className="yaml-side-panel"
+            style={{ width: '50%', flex: 'none' }}
+          >
             {rightPanel}
           </div>
         </div>
@@ -137,19 +132,18 @@ function AppContent() {
 
   return (
     <div className="app-shell" ref={containerRef}>
-      <div className="app-body" style={{ flexDirection: 'column' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="app-body app-body--column">
+        <div className="app-form-column">
           <TabBar activeTab={activeTab} onSelect={setActiveTab} />
           <div className="tab-content">
             <TabContent activeTab={activeTab} />
           </div>
-          <TemplateDrawer
-            open={showTemplateDrawer}
-            onToggle={() => setShowTemplateDrawer(!showTemplateDrawer)}
-          />
+          <TemplateDrawer />
         </div>
         {isBottomPanelOpen && (
           <div className="yaml-bottom-panel" style={{ height: bottomPanelHeight }}>
+            {/* Custom vertical resize handle — Exosphere ships ExResizeHandle for horizontal only.
+                Recorded in EXOSPHERE-CUSTOM.md. */}
             <div className="yaml-bottom-handle" onMouseDown={handleBottomDragStart}>
               <div className="yaml-bottom-handle-bar" />
             </div>

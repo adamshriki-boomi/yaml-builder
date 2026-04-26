@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExButton, ExBadge, ExIconButton, ExInput, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, BadgeColor } from '@boomi/exosphere';
+import { ExButton, ExBadge, ExIconButton, ExInput, ExEmptyState, ExCard, ButtonType, ButtonFlavor, IconButtonType, IconButtonFlavor, BadgeColor } from '@boomi/exosphere';
 import CollapsibleSection from '../Layout/CollapsibleSection';
 import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
 import {
@@ -88,38 +88,28 @@ function StepListRenderer({
   return (
     <div>
       {steps.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '24px 16px' }}>
-          <div style={{ fontSize: '13px', color: 'var(--exo-color-font-secondary, #666)', marginBottom: '12px' }}>
-            No steps yet. Add REST or Loop steps to build the workflow.
-          </div>
+        <div className="empty-state-wrap">
+          <ExEmptyState
+            label="No steps yet"
+            text="Add REST or Loop steps to build the workflow."
+          />
         </div>
       ) : (
         steps.map((step, index) => (
-          <div key={step.id} style={{
-            background: 'var(--exo-color-background-secondary, #f5f5f5)',
-            border: '1px solid var(--exo-color-border-secondary, #e5e5e5)',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '12px',
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '12px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: 'var(--exo-color-font-secondary, #666)' }}>
+          <ExCard key={step.id} className="app-list-card">
+            <div slot="header" className="card-row card-row--between">
+              <div className="card-row">
+                <span className="card-meta">
                   Step {index + 1}
                 </span>
                 <ExBadge color={step.type === 'rest' ? BadgeColor.BLUE : BadgeColor.NAVY}>
                   {step.type === 'rest' ? 'REST' : 'LOOP'}
                 </ExBadge>
-                <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                <span className="card-title">
                   {step.name || `Step ${index + 1}`}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="card-actions">
                 <ExIconButton
                   type={IconButtonType.SECONDARY}
                   flavor={IconButtonFlavor.BASE}
@@ -152,17 +142,15 @@ function StepListRenderer({
                 />
               </div>
             </div>
-            <div>
-              {step.type === 'rest' ? (
-                <RestStepForm step={step} onChange={(updates) => updateStep(step.id, updates)} />
-              ) : (
-                <LoopStepForm step={step} onChange={(updates) => updateStep(step.id, updates)} />
-              )}
-            </div>
-          </div>
+            {step.type === 'rest' ? (
+              <RestStepForm step={step} onChange={(updates) => updateStep(step.id, updates)} />
+            ) : (
+              <LoopStepForm step={step} onChange={(updates) => updateStep(step.id, updates)} />
+            )}
+          </ExCard>
         ))
       )}
-      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+      <div className="form-button-row">
         <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={() => addStep('rest')}>
           + Add REST Step
         </ExButton>
@@ -207,34 +195,22 @@ function MultiReportCard({
   };
 
   return (
-    <div style={{
-      border: '2px solid var(--exo-color-border, #e0e0e0)',
-      borderRadius: '10px',
-      marginBottom: '16px',
-      overflow: 'hidden',
-    }}>
-      {/* Report Header */}
+    <ExCard className="app-list-card">
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          background: 'var(--exo-color-background-secondary, #f5f5f5)',
-          cursor: 'pointer',
-        }}
+        slot="header"
+        className="card-row card-row--between card-row--clickable"
         onClick={() => setExpanded(!expanded)}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="card-row">
           <ExBadge color={BadgeColor.BLUE}>Report {index + 1}</ExBadge>
-          <span style={{ fontWeight: 600, fontSize: '14px' }}>
+          <span className="card-title">
             {report.name || `Report ${index + 1}`}
           </span>
-          <span style={{ fontSize: '12px', color: 'var(--exo-color-font-secondary, #666)' }}>
+          <span className="card-meta">
             ({report.steps.length} step{report.steps.length !== 1 ? 's' : ''})
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }} onClick={e => e.stopPropagation()}>
+        <div className="card-actions" onClick={e => e.stopPropagation()}>
           <ExIconButton
             type={IconButtonType.SECONDARY}
             flavor={IconButtonFlavor.BASE}
@@ -252,9 +228,8 @@ function MultiReportCard({
         </div>
       </div>
 
-      {/* Report Body */}
       {expanded && (
-        <div style={{ padding: '16px' }}>
+        <>
           <div className="form-field">
             <ExInput
               label="Report Name"
@@ -267,14 +242,9 @@ function MultiReportCard({
           {/* Report Parameters */}
           <CollapsibleSection label={`Report Parameters (${report.report_parameters.length})`} defaultOpen={false}>
             {report.report_parameters.map((rp, rpIdx) => (
-              <div key={rp.id} style={{
-                padding: '8px',
-                marginBottom: '6px',
-                border: '1px solid var(--exo-color-border, #e0e0e0)',
-                borderRadius: '6px',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--exo-color-font-secondary, #666)' }}>Param {rpIdx + 1}</span>
+              <div key={rp.id} className="sub-card">
+                <div className="sub-card-header">
+                  <span className="sub-card-label">Param {rpIdx + 1}</span>
                   <ExIconButton
                     type={IconButtonType.SECONDARY}
                     flavor={IconButtonFlavor.RISKY}
@@ -310,17 +280,16 @@ function MultiReportCard({
             </ExButton>
           </CollapsibleSection>
 
-          {/* Report Steps */}
-          <div style={{ marginTop: '12px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Steps</div>
+          <div className="form-section">
+            <div className="form-section-title">Steps</div>
             <StepListRenderer
               steps={report.steps}
               onUpdate={(newSteps) => onUpdate({ steps: newSteps })}
             />
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </ExCard>
   );
 }
 
@@ -340,16 +309,11 @@ function ConfigGroupCard({
   onRemove: () => void;
 }) {
   return (
-    <div style={{
-      border: '1px solid var(--exo-color-border, #e0e0e0)',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: '12px',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <ExCard className="app-list-card">
+      <div slot="header" className="card-row card-row--between">
+        <div className="card-row">
           <ExBadge color={BadgeColor.GRAY}>{label} {index + 1}</ExBadge>
-          <span style={{ fontWeight: 600, fontSize: '13px' }}>
+          <span className="card-title">
             {group.name || `${label} ${index + 1}`}
           </span>
         </div>
@@ -373,7 +337,7 @@ function ConfigGroupCard({
         steps={group.steps}
         onUpdate={(newSteps) => onUpdate({ steps: newSteps })}
       />
-    </div>
+    </ExCard>
   );
 }
 
@@ -467,7 +431,7 @@ export default function StepList() {
     <div>
       {/* Pre-Run Configurations */}
       <CollapsibleSection label={`Pre-Run Configurations (${config.pre_run_configurations.length})`} defaultOpen={false}>
-        <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+        <p className="form-helper-text">
           Initialization and discovery steps that run before the main reports.
         </p>
         {config.pre_run_configurations.map((group, idx) => (
@@ -487,20 +451,19 @@ export default function StepList() {
 
       {/* Multi-Reports */}
       <CollapsibleSection label={`Multi-Reports (${config.multi_reports.length})`}>
-        <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '16px' }}>
+        <p className="form-helper-text">
           Independent reports that each define their own parameters and workflow steps.
         </p>
         {config.multi_reports.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px 24px' }}>
-            <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px', color: 'var(--exo-color-font, #333)' }}>
-              No reports defined
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--exo-color-font-secondary, #666)', marginBottom: '20px', maxWidth: '400px', margin: '0 auto 20px', lineHeight: 1.5 }}>
-              Add multi-reports to define independent data extraction workflows. Each report can have its own parameters and steps.
-            </div>
-            <ExButton type={ButtonType.PRIMARY} flavor={ButtonFlavor.BRANDED} onClick={addReport}>
-              Add First Report
-            </ExButton>
+          <div className="empty-state-wrap">
+            <ExEmptyState
+              label="No reports defined"
+              text="Add multi-reports to define independent data extraction workflows. Each report can have its own parameters and steps."
+            >
+              <ExButton slot="action" type={ButtonType.PRIMARY} flavor={ButtonFlavor.BRANDED} onClick={addReport}>
+                Add First Report
+              </ExButton>
+            </ExEmptyState>
           </div>
         ) : (
           config.multi_reports.map((report, idx) => (
@@ -515,7 +478,7 @@ export default function StepList() {
           ))
         )}
         {config.multi_reports.length > 0 && (
-          <div style={{ marginTop: '8px' }}>
+          <div className="form-toolbar">
             <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addReport}>
               + Add Report
             </ExButton>
@@ -525,7 +488,7 @@ export default function StepList() {
 
       {/* Post-Run Configurations */}
       <CollapsibleSection label={`Post-Run Configurations (${config.post_run_configurations.length})`} defaultOpen={false}>
-        <p style={{ color: 'var(--exo-color-font-secondary, #666)', fontSize: '13px', marginBottom: '12px' }}>
+        <p className="form-helper-text">
           Cleanup and finalization steps that run after all reports complete.
         </p>
         {config.post_run_configurations.map((group, idx) => (

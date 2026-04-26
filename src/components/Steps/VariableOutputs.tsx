@@ -69,19 +69,14 @@ export default function VariableOutputs({ step, onChange }: Props) {
 
   return (
     <div className="form-section">
-      <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+      <div className="form-section-title form-section-title--inline">
         Variable Outputs
         <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addOutput}>Add</ExButton>
       </div>
 
       {step.variables_output.map(output => (
-        <div key={output.id} style={{
-          padding: '12px',
-          marginBottom: '8px',
-          border: '1px solid var(--exo-color-border, #e0e0e0)',
-          borderRadius: '6px',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+        <div key={output.id} className="sub-card">
+          <div className="sub-card-header sub-card-header--end">
             <ExIconButton type={IconButtonType.SECONDARY} flavor={IconButtonFlavor.RISKY} icon="delete" label="Delete output" onClick={() => removeOutput(output.id)} />
           </div>
           <div className="form-row">
@@ -123,14 +118,9 @@ export default function VariableOutputs({ step, onChange }: Props) {
           {/* Transformation Layers */}
           <CollapsibleSection label={`Transformation Layers (${output.transformation_layers.length})`} defaultOpen={false}>
             {output.transformation_layers.map((layer, layerIdx) => (
-              <div key={layer.id} style={{
-                padding: '8px',
-                marginBottom: '6px',
-                border: '1px dashed var(--exo-color-border, #e0e0e0)',
-                borderRadius: '4px',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--exo-color-font-secondary, #666)' }}>Layer {layerIdx + 1}</span>
+              <div key={layer.id} className="sub-card sub-card--dashed">
+                <div className="sub-card-header">
+                  <span className="sub-card-label">Layer {layerIdx + 1}</span>
                   <ExIconButton
                     type={IconButtonType.SECONDARY}
                     flavor={IconButtonFlavor.RISKY}

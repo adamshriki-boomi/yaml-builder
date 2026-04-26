@@ -1,28 +1,27 @@
-import { useState } from 'react';
-import { ExButton, ExDialog, ExIcon, ButtonType, ButtonFlavor, DialogHeaderContent, IconSize } from '@boomi/exosphere';
+import { useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
+import {
+  ExButton, ExDialog, ExBadge, ExAccordion, ExAccordionItem, ExTile,
+  ButtonType, ButtonFlavor, DialogHeaderContent,
+  BadgeColor, BadgeShape, BadgeSize, AccordionVariant, TileVariant,
+} from '@boomi/exosphere';
 import { useConnectorDispatch } from '../../context/ConnectorContext';
 import { templates } from '../../engine/templates';
 
-const TAG_COLORS: Record<string, { bg: string; color: string }> = {
-  AUTH: { bg: '#e8f0fe', color: '#1a73e8' },
-  PAGINATION: { bg: '#fef7e0', color: '#b06000' },
-  'MULTI-REPORT': { bg: '#e6f4ea', color: '#137333' },
+const TAG_BADGE_COLORS: Record<string, BadgeColor> = {
+  AUTH: BadgeColor.BLUE,
+  PAGINATION: BadgeColor.YELLOW,
+  'MULTI-REPORT': BadgeColor.GREEN,
 };
 
-function getTagStyle(tag: string): { background: string; color: string } {
-  const mapped = TAG_COLORS[tag];
-  if (mapped) return { background: mapped.bg, color: mapped.color };
-  return { background: '#f1f3f4', color: '#5f6368' };
+function getTagBadgeColor(tag: string): BadgeColor {
+  return TAG_BADGE_COLORS[tag] || BadgeColor.GRAY;
 }
 
-interface Props {
-  open: boolean;
-  onToggle: () => void;
-}
-
-export default function TemplateDrawer({ open, onToggle }: Props) {
+export default function TemplateDrawer() {
   const dispatch = useConnectorDispatch();
   const [confirmTemplateId, setConfirmTemplateId] = useState<string | null>(null);
+  const accordionItemRef = useRef<ComponentRef<typeof ExAccordionItem>>(null);
 
   const handleConfirm = () => {
     if (!confirmTemplateId) return;
@@ -31,7 +30,9 @@ export default function TemplateDrawer({ open, onToggle }: Props) {
       dispatch({ type: 'RESET', payload: template.config });
     }
     setConfirmTemplateId(null);
-    onToggle();
+    if (accordionItemRef.current) {
+      accordionItemRef.current.open = false;
+    }
   };
 
   const handleCancel = () => {
@@ -40,51 +41,43 @@ export default function TemplateDrawer({ open, onToggle }: Props) {
 
   return (
     <>
-      <div>
-        {open && (
-          <div className="template-drawer-panel">
-            <div className="template-drawer-header">
-              <div className="template-drawer-header-left">
-                <ExIcon icon="template" size={IconSize.S} />
-                <div>
-                  <div className="template-drawer-title">Select a Template</div>
-                  <div className="template-drawer-subtitle">Start with a pre-configured setup to save time</div>
-                </div>
-              </div>
-              <button className="template-drawer-close" onClick={onToggle} aria-label="Close templates">
-                <ExIcon icon="close" size={IconSize.S} />
-              </button>
-            </div>
+      <div className="template-drawer-host">
+        <ExAccordion variant={AccordionVariant.ELEVATED}>
+          <ExAccordionItem
+            ref={accordionItemRef}
+            label="Quick start: Select a template"
+            leadingIcon="document"
+            variant={AccordionVariant.ELEVATED}
+          >
             <div className="template-grid">
               {templates.map(template => (
-                <div
+                <ExTile
                   key={template.id}
-                  className="template-tile"
+                  variant={TileVariant.BASE}
+                  title={template.name}
+                  label={`Use template: ${template.name}`}
                   onClick={() => setConfirmTemplateId(template.id)}
                 >
-                  <div className="template-tile-name">{template.name}</div>
-                  <div className="template-tile-desc">{template.description}</div>
+                  <p className="template-tile-desc">{template.description}</p>
                   {template.tags && template.tags.length > 0 && (
-                    <div className="template-tile-tags">
+                    <div slot="footer" className="template-tile-tags">
                       {template.tags.map(tag => (
-                        <span key={tag} className="template-tag" style={getTagStyle(tag)}>
+                        <ExBadge
+                          key={tag}
+                          color={getTagBadgeColor(tag)}
+                          shape={BadgeShape.ROUND}
+                          size={BadgeSize.SMALL}
+                        >
                           {tag}
-                        </span>
+                        </ExBadge>
                       ))}
                     </div>
                   )}
-                </div>
+                </ExTile>
               ))}
             </div>
-          </div>
-        )}
-        <div className="template-drawer-trigger" onClick={onToggle}>
-          <ExIcon icon="document" size={IconSize.XS} />
-          <span className="template-drawer-trigger-text">
-            {open ? 'Hide templates' : 'Quick start: Select a template'}
-          </span>
-          <ExIcon icon={open ? 'direction-caret-down' : 'direction-caret-up'} size={IconSize.XS} style={{ marginLeft: 'auto' }} />
-        </div>
+          </ExAccordionItem>
+        </ExAccordion>
       </div>
 
       {confirmTemplateId && (
@@ -94,10 +87,10 @@ export default function TemplateDrawer({ open, onToggle }: Props) {
           headerContent={DialogHeaderContent.WARNING}
           onCancel={handleCancel}
         >
-          <p style={{ fontSize: '14px', color: 'var(--exo-color-font, #333)' }}>
+          <p className="dialog-body-text">
             This will replace all your current configuration. Are you sure?
           </p>
-          <div slot="footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <div slot="footer" className="dialog-footer-actions">
             <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={handleCancel}>
               Cancel
             </ExButton>

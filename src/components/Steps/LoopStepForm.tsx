@@ -70,15 +70,15 @@ export default function LoopStepForm({ step, onChange }: Props) {
           onInput={(e: any) => onChange({ item_name: e.target.value })}
         />
       </div>
-      <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="toggle-row-group">
+        <div className="toggle-row toggle-row--inline">
           <ExToggle
             on={step.include_in_output}
             onChange={() => onChange({ include_in_output: !step.include_in_output })}
           />
           <ExLabel>Include in output</ExLabel>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="toggle-row toggle-row--inline">
           <ExToggle
             on={step.ignore_errors}
             onChange={() => onChange({ ignore_errors: !step.ignore_errors })}
@@ -89,20 +89,14 @@ export default function LoopStepForm({ step, onChange }: Props) {
 
       {/* Nested REST Steps */}
       <div className="form-section">
-        <div className="form-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+        <div className="form-section-title form-section-title--inline">
           Nested REST Steps
           <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addNestedStep}>Add Nested Step</ExButton>
         </div>
         {step.nested_steps.map((nestedStep, idx) => (
-          <div key={nestedStep.id} style={{
-            padding: '12px',
-            marginBottom: '12px',
-            border: '1px solid var(--exo-color-border, #e0e0e0)',
-            borderRadius: '6px',
-            background: 'var(--exo-color-background, #fff)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600 }}>Nested Step {idx + 1}</span>
+          <div key={nestedStep.id} className="sub-card sub-card--lg">
+            <div className="sub-card-header">
+              <span className="sub-card-label sub-card-label--strong">Nested Step {idx + 1}</span>
               {step.nested_steps.length > 1 && (
                 <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.RISKY} onClick={() => removeNestedStep(nestedStep.id)}>
                   Remove
