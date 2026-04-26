@@ -245,11 +245,13 @@ export default function ParameterList() {
           )}
       </CollapsibleSection>
 
-      <div className="form-section">
-        <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addParameter}>
-          + Add Parameter
-        </ExButton>
-      </div>
+      {config.interface_parameters.length > 0 && (
+        <div className="form-section">
+          <ExButton type={ButtonType.SECONDARY} flavor={ButtonFlavor.BASE} onClick={addParameter}>
+            + Add Parameter
+          </ExButton>
+        </div>
+      )}
     </div>
   );
 }
