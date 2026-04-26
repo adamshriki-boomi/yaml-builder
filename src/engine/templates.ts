@@ -238,8 +238,7 @@ export const templates: Template[] = [
         {
           id: crypto.randomUUID(),
           name: 'date_range',
-          type: 'string',
-          value: 'last_14_days',
+          type: 'date_range',
         },
         {
           id: crypto.randomUUID(),
@@ -415,6 +414,62 @@ export const templates: Template[] = [
                       from_type: 'json',
                     },
                   ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: crypto.randomUUID(),
+          name: 'Audience Insights',
+          report_parameters: [],
+          steps: [
+            {
+              id: crypto.randomUUID(),
+              type: 'rest',
+              name: 'Fetch Audiences',
+              description: 'Retrieve audience segments and sizes',
+              method: 'GET',
+              endpoint: '/reports/audiences',
+              query_params: [],
+              headers: [],
+              body: '',
+              content_type: 'application/json',
+              variables_output: [
+                {
+                  id: crypto.randomUUID(),
+                  variable_name: 'audience_data',
+                  response_location: 'data',
+                  variable_format: 'json',
+                  transformation_layers: [],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: crypto.randomUUID(),
+          name: 'Conversion Events',
+          report_parameters: [],
+          steps: [
+            {
+              id: crypto.randomUUID(),
+              type: 'rest',
+              name: 'Fetch Conversions',
+              description: 'Retrieve conversion event records',
+              method: 'GET',
+              endpoint: '/reports/conversions',
+              query_params: [],
+              headers: [],
+              body: '',
+              content_type: 'application/json',
+              variables_output: [
+                {
+                  id: crypto.randomUUID(),
+                  variable_name: 'conversion_data',
+                  response_location: 'data',
+                  variable_format: 'json',
+                  transformation_layers: [],
                 },
               ],
             },

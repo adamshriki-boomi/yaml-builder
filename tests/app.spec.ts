@@ -209,7 +209,7 @@ test.describe('Templates', () => {
     );
     const multiReportsLabel = labels.find(l => l.startsWith('Multi-Reports'));
     expect(multiReportsLabel).toBeTruthy();
-    expect(multiReportsLabel).toContain('3');
+    expect(multiReportsLabel).toContain('5');
   });
 });
 

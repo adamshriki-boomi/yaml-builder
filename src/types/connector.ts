@@ -265,3 +265,32 @@ export const createReportParameter = (): ReportParameter => ({
   name: '',
   type: 'string',
 });
+
+// Test result types — produced by demoTestResults.ts and consumed by the Test Panel
+export type ReportStatus = 'passed' | 'failed';
+
+export interface StepResult {
+  method: HttpMethod;
+  url: string;
+  statusCode: number;
+  durationMs: number;
+}
+
+export interface ReportTestResult {
+  reportName: string;
+  status: ReportStatus;
+  recordsReturned: number;
+  durationMs: number;
+  steps: StepResult[];
+  sampleData?: Array<Record<string, unknown>>;
+  sampleColumns?: string[];
+  errorCode?: string;
+  errorMessage?: string;
+  rawResponse: string;
+}
+
+export interface TestRunResult {
+  startedAt: string;
+  durationMs: number;
+  reports: ReportTestResult[];
+}

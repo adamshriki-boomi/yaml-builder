@@ -213,6 +213,125 @@ ex-resize-handle + .yaml-side-panel {
   color: var(--exo-color-font-secondary);
 }
 
+/* Content-mode layout for the test panel (form / results phases) */
+.test-panel-body--content {
+  display: block;
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  overflow-y: auto;
+}
+
+.test-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--exo-spacing-standard);
+  padding-bottom: var(--exo-spacing-x-large);
+}
+
+.test-panel-intro {
+  font-size: var(--exo-font-size-small);
+  color: var(--exo-color-font-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.test-panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--exo-spacing-small);
+}
+
+.test-results-banner {
+  /* Banner is the visual anchor for results — no extra spacing chrome needed */
+}
+
+.test-results-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--exo-spacing-small);
+  flex-wrap: wrap;
+  margin-top: var(--exo-spacing-small);
+  margin-bottom: var(--exo-spacing-x-small);
+}
+
+/* Per-row status emphasis — colored left border tints status without overriding Exosphere chrome */
+.report-row {
+  border-left: var(--exo-spacing-3x-small) solid transparent;
+  border-radius: var(--exo-spacing-2x-small);
+  margin-bottom: var(--exo-spacing-2x-small);
+  background: var(--exo-color-background);
+}
+
+.report-row--passed {
+  border-left-color: var(--exo-color-background-success-strong);
+}
+
+.report-row--failed {
+  border-left-color: var(--exo-color-border-danger-strong);
+  background: var(--exo-color-background-danger-weak);
+}
+
+.report-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--exo-spacing-small);
+  padding: var(--exo-spacing-x-small) 0;
+}
+
+.report-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--exo-spacing-small);
+  flex-wrap: wrap;
+}
+
+.report-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--exo-spacing-2x-small);
+  flex-wrap: wrap;
+}
+
+.report-section-label {
+  font-size: var(--exo-font-size-x-small);
+  font-weight: 600;
+  color: var(--exo-color-font-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: var(--exo-spacing-x-small);
+  display: flex;
+  align-items: baseline;
+  gap: var(--exo-spacing-x-small);
+}
+
+.report-section-label-aux {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  color: var(--exo-color-font-tertiary);
+}
+
+.report-error {
+  margin-top: var(--exo-spacing-x-small);
+}
+
+.raw-response {
+  font-family: var(--exo-font-family-mono, ui-monospace, Menlo, monospace);
+  font-size: var(--exo-font-size-x-small);
+  color: var(--exo-color-font);
+  background: var(--exo-color-surface-secondary);
+  padding: var(--exo-spacing-small);
+  border-radius: var(--exo-spacing-2x-small);
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* ==============================
    FORM ELEMENTS
    ============================== */

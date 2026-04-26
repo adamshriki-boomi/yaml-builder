@@ -27,3 +27,7 @@ dist-ssr
 tests/screenshots
 test-results
 playwright-report
+
+# Local tool state
+.claude/
+.superpowers/
