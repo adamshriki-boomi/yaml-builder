@@ -56,7 +56,7 @@ export default function TestResults({ result, onReRun }: Props) {
   return (
     <div className="test-panel-content">
       <div className="test-results-banner">
-        <ExAlertBanner type={bannerType} variant={AlertBannerVariant.INLINE}>
+        <ExAlertBanner type={bannerType} variant={AlertBannerVariant.INLINE} open hideClose>
           {bannerLine}
         </ExAlertBanner>
       </div>

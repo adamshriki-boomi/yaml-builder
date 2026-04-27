@@ -4,8 +4,8 @@ import { EditorState } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
 import { yaml } from '@codemirror/lang-yaml';
 import { undo, redo } from '@codemirror/commands';
-import { ExAlertBanner, ExIconButton, AlertBannerType, AlertBannerVariant, IconButtonType, IconButtonFlavor } from '@boomi/exosphere';
-import { useConnector } from '../../context/ConnectorContext';
+import { ExAlertBanner, ExIconButton, ExTooltip, AlertBannerType, AlertBannerVariant, IconButtonType, IconButtonFlavor, TooltipPosition } from '@boomi/exosphere';
+import { useConnector, useConnectorDispatch } from '../../context/ConnectorContext';
 import { useYamlSync } from '../../hooks/useYamlSync';
 import { stringify, parse } from 'yaml';
 
@@ -18,6 +18,7 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | undefined>(undefined);
   const { yamlText, yamlError } = useConnector();
+  const dispatch = useConnectorDispatch();
   const { handleEditorChange } = useYamlSync();
   const isInternalUpdate = useRef(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -112,10 +113,11 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
       });
       isInternalUpdate.current = false;
       handleEditorChange(formatted);
+      dispatch({ type: 'SET_YAML_ERROR', payload: null });
     } catch {
-      // Invalid YAML — can't format
+      dispatch({ type: 'SET_YAML_ERROR', payload: 'Cannot format invalid YAML — fix syntax errors first.' });
     }
-  }, [handleEditorChange]);
+  }, [handleEditorChange, dispatch]);
 
   const handleCompact = useCallback(() => {
     const view = viewRef.current;
@@ -123,41 +125,61 @@ export default function YamlEditor({ onTestToggle, isTestMode }: YamlEditorProps
     const currentText = view.state.doc.toString();
     try {
       const parsed = parse(currentText);
-      const compacted = stringify(parsed, { indent: 2, lineWidth: 80 });
+      const compacted = stringify(parsed, { indent: 2, lineWidth: 60 });
       isInternalUpdate.current = true;
       view.dispatch({
         changes: { from: 0, to: view.state.doc.length, insert: compacted },
       });
       isInternalUpdate.current = false;
       handleEditorChange(compacted);
+      dispatch({ type: 'SET_YAML_ERROR', payload: null });
     } catch {
-      // Invalid YAML — can't compact
+      dispatch({ type: 'SET_YAML_ERROR', payload: 'Cannot compact invalid YAML — fix syntax errors first.' });
     }
-  }, [handleEditorChange]);
+  }, [handleEditorChange, dispatch]);
 
   return (
     <div className="yaml-editor-shell">
       <div className="editor-toolbar">
         <div className="editor-toolbar-group">
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="sliders" label="Format YAML" onClick={handleFormat} />
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="columns" label="Compact YAML" onClick={handleCompact} />
+          <ExTooltip position={TooltipPosition.BOTTOM}>
+            <ExIconButton slot="anchor" type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="alignment-left" label="Format YAML" onClick={handleFormat} />
+            Pretty-print: re-indent and expand long lines
+          </ExTooltip>
+          <ExTooltip position={TooltipPosition.BOTTOM}>
+            <ExIconButton slot="anchor" type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="columns" label="Compact YAML" onClick={handleCompact} />
+            Compact: wrap long lines and use flow style for short collections
+          </ExTooltip>
         </div>
         <div className="editor-toolbar-divider" />
         <div className="editor-toolbar-group">
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-arrow-single" label="Undo" onClick={handleUndo} />
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-double-arrow" label="Redo" onClick={handleRedo} />
+          <ExTooltip position={TooltipPosition.BOTTOM}>
+            <ExIconButton slot="anchor" type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-arrow-single" label="Undo" onClick={handleUndo} />
+            Undo last edit
+          </ExTooltip>
+          <ExTooltip position={TooltipPosition.BOTTOM}>
+            <ExIconButton slot="anchor" type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="circular-double-arrow" label="Redo" onClick={handleRedo} />
+            Redo last undone edit
+          </ExTooltip>
         </div>
         <div className="editor-toolbar-divider" />
         <div className="editor-toolbar-group">
-          <ExIconButton type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="copy" label="Copy YAML" onClick={copyToClipboard} />
+          <ExTooltip position={TooltipPosition.BOTTOM}>
+            <ExIconButton slot="anchor" type={IconButtonType.TERTIARY} flavor={IconButtonFlavor.BASE} icon="copy" label="Copy YAML" onClick={copyToClipboard} />
+            Copy YAML to clipboard
+          </ExTooltip>
           {onTestToggle && (
-            <ExIconButton
-              type={isTestMode ? IconButtonType.PRIMARY : IconButtonType.TERTIARY}
-              flavor={isTestMode ? IconButtonFlavor.BRANDED : IconButtonFlavor.BASE}
-              icon="console-screen"
-              label={isTestMode ? 'Back to YAML Editor' : 'Test Blueprint'}
-              onClick={onTestToggle}
-            />
+            <ExTooltip position={TooltipPosition.BOTTOM}>
+              <ExIconButton
+                slot="anchor"
+                type={isTestMode ? IconButtonType.PRIMARY : IconButtonType.TERTIARY}
+                flavor={isTestMode ? IconButtonFlavor.BRANDED : IconButtonFlavor.BASE}
+                icon="console-screen"
+                label={isTestMode ? 'Back to YAML Editor' : 'Test Blueprint'}
+                onClick={onTestToggle}
+              />
+              {isTestMode ? 'Back to YAML Editor' : 'Run a test against this Blueprint'}
+            </ExTooltip>
           )}
         </div>
       </div>

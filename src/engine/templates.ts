@@ -238,11 +238,13 @@ export const templates: Template[] = [
         {
           id: crypto.randomUUID(),
           name: 'date_range',
+          label: 'Time Period (date_range)',
           type: 'date_range',
         },
         {
           id: crypto.randomUUID(),
           name: 'account_ids',
+          label: "Account ID's (account_ids)",
           type: 'multiselect',
           required: true,
           dynamic_source: {

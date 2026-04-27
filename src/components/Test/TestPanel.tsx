@@ -3,10 +3,12 @@ import {
   ExButton,
   ExIconButton,
   ExEmptyState,
+  ExTooltip,
   ButtonType,
   ButtonFlavor,
   IconButtonType,
   IconButtonFlavor,
+  TooltipPosition,
 } from '@boomi/exosphere';
 import InterfaceParametersForm from './InterfaceParametersForm';
 import TestRunningState from './TestRunningState';
@@ -46,18 +48,22 @@ export default function TestPanel({ onBackToEditor }: Props) {
     setFormInstance(n => n + 1);
   };
 
-  const isContentPhase = phase === 'form' || phase === 'results';
+  const isContentPhase = phase !== 'empty';
 
   return (
     <div className="test-panel">
       <div className="editor-toolbar">
-        <ExIconButton
-          type={IconButtonType.TERTIARY}
-          flavor={IconButtonFlavor.BASE}
-          icon="direction-arrow-left"
-          label="Back to YAML Editor"
-          onClick={onBackToEditor}
-        />
+        <ExTooltip position={TooltipPosition.BOTTOM}>
+          <ExIconButton
+            slot="anchor"
+            type={IconButtonType.TERTIARY}
+            flavor={IconButtonFlavor.BASE}
+            icon="direction-arrow-left"
+            label="Back to YAML Editor"
+            onClick={onBackToEditor}
+          />
+          Back to YAML Editor
+        </ExTooltip>
         <span className="test-panel-title">Test Blueprint</span>
       </div>
       <div className={isContentPhase ? 'test-panel-body test-panel-body--content' : 'test-panel-body'}>

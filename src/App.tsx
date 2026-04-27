@@ -52,7 +52,9 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState(0);
   const [isTestMode, setIsTestMode] = useState(false);
   const [isWide, setIsWide] = useState(true);
-  const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(() =>
+    Math.round(window.innerHeight * 0.5),
+  );
   const [isBottomPanelOpen] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingBottom = useRef(false);
@@ -68,6 +70,8 @@ function AppContent() {
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setIsWide(entry.contentRect.width >= 900);
+        const maxHeight = Math.floor(entry.contentRect.height * 0.85);
+        setBottomPanelHeight(prev => Math.min(prev, Math.max(120, maxHeight)));
       }
     });
     observer.observe(container);
@@ -82,7 +86,8 @@ function AppContent() {
     const onMouseMove = (e: MouseEvent) => {
       if (!isDraggingBottom.current || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      setBottomPanelHeight(Math.max(120, Math.min(rect.bottom - e.clientY, 500)));
+      const maxHeight = Math.floor(rect.height * 0.85);
+      setBottomPanelHeight(Math.max(120, Math.min(rect.bottom - e.clientY, maxHeight)));
     };
 
     const onMouseUp = () => {

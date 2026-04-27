@@ -2,6 +2,7 @@ import {
   ExAccordion,
   ExAccordionItem,
   ExBadge,
+  ExIcon,
   ExPill,
   ExAlertBanner,
   ExStructuredList,
@@ -10,6 +11,8 @@ import {
   ExStructuredListCol,
   AccordionVariant,
   BadgeColor,
+  IconVariant,
+  IconSize,
   PillColor,
   PillSize,
   AlertBannerType,
@@ -47,9 +50,15 @@ export default function ReportResultRow({ result }: Props) {
 
   return (
     <div className={`report-row ${statusClass}`}>
+      <span className="report-row-status-icon" aria-hidden="true">
+        <ExIcon
+          icon={passed ? 'status-success' : 'status-fail'}
+          variant={IconVariant.TERTIARY}
+          size={IconSize.SMALL}
+        />
+      </span>
       <ExAccordionItem
         label={headerSummary}
-        leadingIcon={passed ? 'status-success' : 'status-fail'}
         variant={AccordionVariant.FLAT}
       >
       <div className="report-result-body">

@@ -105,7 +105,7 @@ function renderField(
   value: string,
   onChange: (v: string) => void,
 ) {
-  const label = param.name || 'Parameter';
+  const label = param.label || param.name || 'Parameter';
 
   if (param.type === 'authentication') {
     return (

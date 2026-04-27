@@ -114,6 +114,7 @@ function serializeInterfaceParam(p: InterfaceParameter): any {
     name: p.name,
     type: p.type,
   };
+  if (p.label) param.label = p.label;
   if (p.auth_type) param.auth_type = p.auth_type;
   if (p.value) param.value = p.value;
   if (p.required) param.required = true;
@@ -314,6 +315,7 @@ function deserializeInterfaceParam(p: any): InterfaceParameter {
     name: p.name || '',
     type: p.type || 'string',
   };
+  if (p.label) param.label = p.label;
   if (p.auth_type) param.auth_type = p.auth_type;
   if (p.value !== undefined) param.value = String(p.value);
   if (p.required) param.required = true;

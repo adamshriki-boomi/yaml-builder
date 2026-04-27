@@ -38,6 +38,7 @@ export interface DynamicSource {
 export interface InterfaceParameter {
   id: string;
   name: string;
+  label?: string;         // friendly display label; falls back to name
   type: ParameterType;
   auth_type?: string;
   value?: string;

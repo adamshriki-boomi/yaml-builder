@@ -30,9 +30,12 @@ export default function TemplateDrawer() {
       dispatch({ type: 'RESET', payload: template.config });
     }
     setConfirmTemplateId(null);
-    if (accordionItemRef.current) {
-      accordionItemRef.current.open = false;
-    }
+    // toggle() (vs setting `open = false`) triggers animateHeight() so the
+    // accordion content collapses; otherwise the host stays at its expanded height.
+    const item = accordionItemRef.current as
+      | (ComponentRef<typeof ExAccordionItem> & { open?: boolean; toggle?: () => void })
+      | null;
+    if (item?.open) item.toggle?.();
   };
 
   const handleCancel = () => {

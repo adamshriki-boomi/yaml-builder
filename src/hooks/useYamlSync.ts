@@ -32,7 +32,9 @@ export function useYamlSync() {
         isUpdatingFromEditor.current = true;
         dispatch({ type: 'SET_CONFIG', payload: newConfig });
         dispatch({ type: 'SET_YAML_ERROR', payload: null });
-        dispatch({ type: 'SET_SYNC_SOURCE', payload: null });
+        // Note: leave syncSource as 'editor' so the UI→YAML effect doesn't
+        // regenerate canonical YAML and overwrite the user's typed/formatted text.
+        // The next UI change will flip syncSource to 'ui' and regenerate normally.
       } catch (e) {
         dispatch({ type: 'SET_YAML_ERROR', payload: (e as Error).message });
       }
