@@ -54,7 +54,7 @@ export default function ReportResultRow({ result }: Props) {
         <ExIcon
           icon={passed ? 'status-success' : 'status-fail'}
           variant={IconVariant.TERTIARY}
-          size={IconSize.SMALL}
+          size={IconSize.S}
         />
       </span>
       <ExAccordionItem

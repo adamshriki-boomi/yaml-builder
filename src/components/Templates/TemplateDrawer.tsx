@@ -32,8 +32,9 @@ export default function TemplateDrawer() {
     setConfirmTemplateId(null);
     // toggle() (vs setting `open = false`) triggers animateHeight() so the
     // accordion content collapses; otherwise the host stays at its expanded height.
-    const item = accordionItemRef.current as
-      | (ComponentRef<typeof ExAccordionItem> & { open?: boolean; toggle?: () => void })
+    // toggle is private on AccordionItem's TS type; cast through unknown to call it.
+    const item = accordionItemRef.current as unknown as
+      | { open?: boolean; toggle?: () => void }
       | null;
     if (item?.open) item.toggle?.();
   };
