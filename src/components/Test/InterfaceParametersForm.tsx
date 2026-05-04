@@ -1,21 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
   ExButton,
-  ExIconButton,
-  ExCard,
   ExInput,
   ExSelect,
   ExMenuItem,
   ExDatePicker,
-  ExTooltip,
   ButtonType,
   ButtonFlavor,
-  IconButtonType,
-  IconButtonFlavor,
   DateType,
-  TooltipPosition,
 } from '@boomi/exosphere';
-import CollapsibleSection from '../Layout/CollapsibleSection';
 import { useConnector } from '../../context/ConnectorContext';
 import type { InterfaceParameter } from '../../types/connector';
 
@@ -61,7 +54,28 @@ export default function InterfaceParametersForm({ onRun, onReloadParameters }: P
         To test your Blueprint, enter values for the parameters below. These values are used only for this test run and won't be saved.
       </p>
 
-      <div className="test-panel-toolbar">
+      <div className="form-section-title">Interface Parameters</div>
+
+      {params.length === 0 ? (
+        <p className="form-helper-text">This Blueprint has no interface parameters defined.</p>
+      ) : (
+        <div className="test-panel-fields">
+          {params.map(param => (
+            <div className="form-field" key={param.id}>
+              {renderField(param, values[param.id] ?? '', (v) => setValue(param.id, v))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="test-panel-footer">
+        <ExButton
+          type={ButtonType.SECONDARY}
+          flavor={ButtonFlavor.BASE}
+          onClick={onReloadParameters}
+        >
+          Reset values
+        </ExButton>
         <ExButton
           type={ButtonType.PRIMARY}
           flavor={ButtonFlavor.BASE}
@@ -70,32 +84,7 @@ export default function InterfaceParametersForm({ onRun, onReloadParameters }: P
         >
           Run Test
         </ExButton>
-        <ExTooltip position={TooltipPosition.LEFT}>
-          <ExIconButton
-            slot="anchor"
-            type={IconButtonType.TERTIARY}
-            flavor={IconButtonFlavor.BASE}
-            icon="circular-arrow-single"
-            label="Reload parameters"
-            onClick={onReloadParameters}
-          />
-          Reload parameters from your YAML and reset entered values
-        </ExTooltip>
       </div>
-
-      <CollapsibleSection label="Interface Parameters" defaultOpen>
-        {params.length === 0 ? (
-          <p className="form-helper-text">This Blueprint has no interface parameters defined.</p>
-        ) : (
-          <ExCard className="app-list-card">
-            {params.map(param => (
-              <div className="form-field" key={param.id}>
-                {renderField(param, values[param.id] ?? '', (v) => setValue(param.id, v))}
-              </div>
-            ))}
-          </ExCard>
-        )}
-      </CollapsibleSection>
     </div>
   );
 }

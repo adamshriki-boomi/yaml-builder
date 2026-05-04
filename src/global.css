@@ -240,11 +240,19 @@ ex-resize-handle + .yaml-side-panel {
   margin: 0;
 }
 
-.test-panel-toolbar {
+.test-panel-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.test-panel-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--exo-spacing-small);
+  padding-top: var(--exo-spacing-medium);
+  margin-top: var(--exo-spacing-small);
+  border-top: 1px solid var(--exo-color-border-secondary);
 }
 
 .test-results-banner {
