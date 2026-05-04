@@ -132,9 +132,9 @@ function renderField(
       <ExDatePicker
         label={label || 'Date range'}
         type={DateType.DATE_RANGE}
+        format="mm/dd/yyyy"
         startDate={startDate ?? ''}
         endDate={endDate ?? ''}
-        placeholder="Select a date range"
         onChange={(e: any) => {
           const start = e.detail?.startDate ?? e.target?.startDate ?? '';
           const end = e.detail?.endDate ?? e.target?.endDate ?? '';
